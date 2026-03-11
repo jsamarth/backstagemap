@@ -82,6 +82,21 @@ Non-music events (comedy nights, trivia, sports screenings) are excluded even if
 3. **Explore** — Click any event to see a detail card with full info and a link to the original source (venue website calendar page).
 4. **Save** — Lightweight account (email or Google login) to bookmark events for later.
 
+### Build Phases
+
+#### Phase 1 — App Skeleton
+
+- Stand up the full stack: frontend map UI, API server, Postgres + PostGIS schema, auth (email + Google OAuth)
+- Seed the DB manually with a realistic dummy set of venues and events covering the 7 neighborhoods
+- All user-facing features work end-to-end against this dummy data: map pins, distance ranking, filters, event detail card, bookmarking, email digest
+- No scraping workflows in this phase — focus is on proving the product skeleton is solid
+
+#### Phase 2 — Live Data Pipeline
+
+- Activate all 4 workflows: Venue Discovery, HTML Scraping, AI Parsing, Freshness Reset
+- Replace dummy data with real scraped events
+- Quality gate: ≥80% of scraped events must be accurate (correct name, date, venue) before Phase 2 is considered complete
+
 ---
 
 ## 4. Data Architecture
@@ -120,7 +135,7 @@ Runs on schedule; always tries to find new venues not already in the database.
 
 - **Schedule:** nightly
 - **Batch:** 30 venues per run, selected by `scrape_status = NOT_STARTED`, sorted by `last_scraped_at` ASC (oldest first)
-- **Per venue:** fetch the calendar/events page, capture raw HTML, store with timestamp and source URL
+- **Per venue:** fetch the calendar/events page, capture raw HTML, upload to blob storage, store the blob path in `raw_html_url` with timestamp and source URL
 - **On success:** `scrape_status → HTML_SCRAPED`, update `last_scraped_at`
 - **On failure:** log error, leave `scrape_status = NOT_STARTED` — venue is automatically retried in the next nightly cycle
 
@@ -237,12 +252,14 @@ Once the pipeline is reliable and the product feels polished, add new neighborho
 
 ## 9. Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| Data quality | ≥80% of scraped events are accurate (correct name, date, venue) |
-| Coverage | 50+ active venues indexed across the 7 neighborhoods |
-| Engagement | Users who reach the map view explore at least 3 events per session |
-| Retention | Users who bookmark an event return within 7 days to check for new ones |
+
+| Metric       | Target                                                                 |
+| ------------ | ---------------------------------------------------------------------- |
+| Data quality | ≥80% of scraped events are accurate (correct name, date, venue)        |
+| Coverage     | 50+ active venues indexed across the 7 neighborhoods                   |
+| Engagement   | Users who reach the map view explore at least 3 events per session     |
+| Retention    | Users who bookmark an event return within 7 days to check for new ones |
+
 
 ---
 
@@ -286,50 +303,66 @@ The following are explicitly deferred to post-MVP:
 
 ### Venues Table Schema
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | UUID | PK |
-| `name` | text | |
-| `google_maps_venue_id` | text | unique; used for dedup in Workflow 1 |
-| `address` | text | |
-| `neighborhood` | enum | one of the 7 target neighborhoods |
-| `venue_type` | enum | park, bar, cafe, performance_venue, club |
-| `website_url` | text | |
-| `calendar_url` | text | may differ from homepage |
-| `scrape_status` | enum | NOT_STARTED, HTML_SCRAPED, EXTRACTED |
-| `raw_html` | text | latest HTML from Workflow 2 |
-| `last_scraped_at` | timestamp | updated by Workflow 2 |
-| `extracted_at` | timestamp | updated by Workflow 3 |
-| `created_at` | timestamp | |
+
+| Field                  | Type                  | Notes                                                              |
+| ---------------------- | --------------------- | ------------------------------------------------------------------ |
+| `id`                   | UUID                  | PK                                                                 |
+| `name`                 | text                  |                                                                    |
+| `google_maps_venue_id` | text                  | unique; used for dedup in Workflow 1                               |
+| `address`              | text                  |                                                                    |
+| `neighborhood`         | enum                  | one of the 7 target neighborhoods                                  |
+| `venue_type`           | enum                  | park, bar, cafe, performance_venue, club                           |
+| `website_url`          | text                  |                                                                    |
+| `calendar_url`         | text                  | may differ from homepage                                           |
+| `location`             | geometry(Point, 4326) | PostGIS point; enables distance queries and bounding-box filtering |
+| `scrape_status`        | enum                  | NOT_STARTED, HTML_SCRAPED, EXTRACTED                               |
+| `raw_html_url`         | text                  | blob storage path to latest HTML from Workflow 2                   |
+| `last_scraped_at`      | timestamp             | updated by Workflow 2                                              |
+| `extracted_at`         | timestamp             | updated by Workflow 3                                              |
+| `created_at`           | timestamp             |                                                                    |
+
 
 ### Events Table Schema
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `id` | UUID | PK |
-| `venue_id` | UUID | FK → venues |
-| `event_name` | text | |
-| `artist_name` | text | nullable |
-| `date` | date | YYYY-MM-DD |
-| `time_start` | time | nullable |
-| `time_end` | time | nullable |
-| `price_type` | enum | free, cover, ticketed |
-| `price_amount` | decimal | nullable |
-| `description` | text | nullable |
-| `type` | text | rock, folk, DJ, open-mic, jam, etc. |
-| `recurring` | boolean | |
-| `source_url` | text | direct link to venue calendar page |
-| `parsed_at` | timestamp | |
-| `created_at` | timestamp | |
+
+| Field          | Type      | Notes                               |
+| -------------- | --------- | ----------------------------------- |
+| `id`           | UUID      | PK                                  |
+| `venue_id`     | UUID      | FK → venues                         |
+| `event_name`   | text      |                                     |
+| `artist_name`  | text      | nullable                            |
+| `date`         | date      | YYYY-MM-DD                          |
+| `time_start`   | time      | nullable                            |
+| `time_end`     | time      | nullable                            |
+| `price_type`   | enum      | free, cover, ticketed               |
+| `price_amount` | decimal   | nullable                            |
+| `description`  | text      | nullable                            |
+| `type`         | text      | rock, folk, DJ, open-mic, jam, etc. |
+| `recurring`    | boolean   |                                     |
+| `source_url`   | text      | direct link to venue calendar page  |
+| `parsed_at`    | timestamp |                                     |
+| `created_at`   | timestamp |                                     |
+
+
+### Infrastructure Notes
+
+**PostGIS** — the venues table uses a `geometry(Point, 4326)` column (`location`) populated from the venue's lat/lng at insert time. This enables two critical query patterns:
+
+- **Distance ranking:** `ORDER BY location <-> ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)` returns events sorted by proximity to the user with index support (no full-table scan).
+- **Bounding-box filtering:** `WHERE location && ST_MakeEnvelope(...)` restricts results to the visible map viewport efficiently.
+
+**Blob Storage** — raw HTML from Workflow 2 is written to blob storage (e.g., S3 / R2 / GCS) rather than stored inline in Postgres. The `raw_html_url` column holds the path. This keeps the database lean, avoids row-size bloat on large HTML pages, and lets Workflow 3 stream the content directly from object storage without pulling it through the API layer.
 
 ### Workflow Schedule Summary
 
-| Workflow | Frequency | Reads | Writes |
-|----------|-----------|-------|--------|
-| 1 — Venue Discovery | On schedule | Google Maps / Yelp | venues (new rows, NOT_STARTED) |
-| 2 — HTML Scraping | Nightly | venues WHERE scrape_status = NOT_STARTED (30 oldest) | raw_html, last_scraped_at, scrape_status → HTML_SCRAPED |
-| 3 — AI Parsing | Daily | venues WHERE scrape_status = HTML_SCRAPED | events (upsert), scrape_status → EXTRACTED, extracted_at |
-| 4 — Freshness Reset | Every 5 days | venues WHERE scrape_status = EXTRACTED (oldest first) | scrape_status → NOT_STARTED |
+
+| Workflow            | Frequency    | Reads                                                 | Writes                                                   |
+| ------------------- | ------------ | ----------------------------------------------------- | -------------------------------------------------------- |
+| 1 — Venue Discovery | On schedule  | Google Maps / Yelp                                    | venues (new rows, NOT_STARTED)                           |
+| 2 — HTML Scraping   | Nightly      | venues WHERE scrape_status = NOT_STARTED (30 oldest)  | raw_html, last_scraped_at, scrape_status → HTML_SCRAPED  |
+| 3 — AI Parsing      | Daily        | venues WHERE scrape_status = HTML_SCRAPED             | events (upsert), scrape_status → EXTRACTED, extracted_at |
+| 4 — Freshness Reset | Every 5 days | venues WHERE scrape_status = EXTRACTED (oldest first) | scrape_status → NOT_STARTED                              |
+
 
 ---
 
@@ -338,15 +371,18 @@ The following are explicitly deferred to post-MVP:
 The following items are deferred until after MVP validation:
 
 ### Freemium Tier Differentiation
+
 - Free tier: up to 10 events within a 2-mile radius; digest capped at 10 events; up to 5 bookmarks
 - Premium tier: unlimited events city-wide; full email digest; unlimited bookmarks; early access to new neighborhoods
 - In-app payment processing (Stripe or equivalent)
 
 ### Event Detail Enhancements
+
 - Source attribution link: "Via [Venue Name] website" on the event detail card
 - `spotify_artist_profile` field: Spotify URL enrichment for artist records
 
 ### Platform Expansion
+
 - Social features: following artists, sharing events, reviews
 - Venue and artist accounts and dashboards
 - Native mobile app (web-first for MVP)
