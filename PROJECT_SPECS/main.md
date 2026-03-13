@@ -63,6 +63,12 @@ BackstageMap solves the fan-side problem first. If fans come, venue visibility f
 
 NYC-only to start. Dense, music-rich, and manageable to validate the pipeline and product before expanding.
 
+### Landing page
+Should have a map layout where all the events show up as different types of pins / icons. It should be pannable. There should be a filter bar that can filter out different events on the map. There should be a couple of auth buttons for login and signup.
+
+### Auth
+We should support auth through email / password, or through Google login. Supabase should handle this.
+
 ### Event Types
 
 All music events are in scope:

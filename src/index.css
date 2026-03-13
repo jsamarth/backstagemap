@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 7.1%;
+    --foreground: 210 20% 98%;
+
+    --card: 0 0% 11.8%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 0 0% 11.8%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 271 91% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 220 9% 66%;
+
+    --accent: 0 0% 18%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 271 91% 65%;
+
+    --radius: 0.75rem;
+
+    /* Event type accent colors */
+    --pin-live-band: 330 81% 73%;
+    --pin-dj: 187 92% 43%;
+    --pin-open-mic: 38 92% 50%;
+    --pin-jam-session: 142 71% 45%;
+
+    --sidebar-background: 0 0% 7.1%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 271 91% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 271 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+/* MapLibre overrides for dark theme */
+.maplibregl-popup-content {
+  background: hsl(0 0% 11.8%) !important;
+  color: hsl(210 20% 98%) !important;
+  border-radius: 0.75rem !important;
+  padding: 0 !important;
+  box-shadow: 0 20px 60px -10px rgba(0,0,0,0.5) !important;
+  border: 1px solid hsl(0 0% 20%) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: hsl(0 0% 11.8%) !important;
+}
+
+.maplibregl-popup-close-button {
+  color: hsl(220 9% 66%) !important;
+  font-size: 18px !important;
+  padding: 4px 8px !important;
+}
+
+.maplibregl-ctrl-attrib {
+  background: rgba(18, 18, 18, 0.7) !important;
+  color: hsl(220 9% 46%) !important;
+  font-size: 10px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: hsl(220 9% 56%) !important;
+}

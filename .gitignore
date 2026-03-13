@@ -1,0 +1,28 @@
+node_modules
+.DS_Store
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Vite cache
+.vite/
+
+# Local Supabase state
+.supabase/
+
+# npm lock file (using Bun)
+package-lock.json
