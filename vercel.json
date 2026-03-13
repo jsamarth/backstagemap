@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/venue-discovery",
+      "schedule": "0 10 * * 1"
+    },
+    {
+      "path": "/api/cron/html-scrape",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/ai-parse",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/freshness-reset",
+      "schedule": "0 6 */5 * *"
+    }
+  ]
+}

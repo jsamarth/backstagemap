@@ -108,7 +108,6 @@ export type Database = {
       venues: {
         Row: {
           address: string
-          calendar_url: string | null
           created_at: string
           extracted_at: string | null
           google_maps_venue_id: string | null
@@ -125,7 +124,6 @@ export type Database = {
         }
         Insert: {
           address: string
-          calendar_url?: string | null
           created_at?: string
           extracted_at?: string | null
           google_maps_venue_id?: string | null
@@ -142,7 +140,6 @@ export type Database = {
         }
         Update: {
           address?: string
-          calendar_url?: string | null
           created_at?: string
           extracted_at?: string | null
           google_maps_venue_id?: string | null

@@ -26,3 +26,9 @@ coverage/
 
 # npm lock file (using Bun)
 package-lock.json
+
+# Supabase CLI temp state (machine-local)
+supabase/.temp/
+
+# Claude Code memory/plans (machine-local)
+.claude/
