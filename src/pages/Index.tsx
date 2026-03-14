@@ -6,6 +6,7 @@ import { VenueEventsPanel } from "@/components/VenueEventsPanel";
 import { EventLegend } from "@/components/EventLegend";
 import { LogoMark } from "@/components/LogoMark";
 import { SavedEventsPanel } from "@/components/SavedEventsPanel";
+import { WelcomeModal } from "@/components/WelcomeModal";
 import { useEvents } from "@/hooks/useEvents";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import type { FilterState, EventWithVenue } from "@/types";
@@ -99,6 +100,9 @@ export default function Index() {
           onRemoveBookmark={(id) => removeBookmark(id)}
         />
       )}
+
+      {/* Welcome modal */}
+      <WelcomeModal />
 
       {/* Loading state */}
       {isLoading && (
