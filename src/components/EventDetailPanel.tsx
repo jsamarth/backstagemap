@@ -10,8 +10,6 @@ interface EventDetailPanelProps {
   onBack?: () => void;
   isBookmarked: boolean;
   onToggleBookmark: () => void;
-  isLoggedIn: boolean;
-  onLoginRequired: () => void;
 }
 
 export function EventDetailPanel({
@@ -20,16 +18,10 @@ export function EventDetailPanel({
   onBack,
   isBookmarked,
   onToggleBookmark,
-  isLoggedIn,
-  onLoginRequired,
 }: EventDetailPanelProps) {
   const eventType = event.event_type as EventTypeKey;
 
   const handleBookmark = () => {
-    if (!isLoggedIn) {
-      onLoginRequired();
-      return;
-    }
     onToggleBookmark();
   };
 

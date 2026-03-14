@@ -4,12 +4,9 @@ import { FilterBar } from "@/components/FilterBar";
 import { EventDetailPanel } from "@/components/EventDetailPanel";
 import { VenueEventsPanel } from "@/components/VenueEventsPanel";
 import { EventLegend } from "@/components/EventLegend";
-import { HeaderBar } from "@/components/HeaderBar";
 import { LogoMark } from "@/components/LogoMark";
-import { AuthModal } from "@/components/AuthModal";
 import { SavedEventsPanel } from "@/components/SavedEventsPanel";
 import { useEvents } from "@/hooks/useEvents";
-import { useAuth } from "@/hooks/useAuth";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import type { FilterState, EventWithVenue } from "@/types";
 
@@ -24,7 +21,6 @@ export default function Index() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedVenueEvents, setSelectedVenueEvents] = useState<EventWithVenue[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
-  const [authOpen, setAuthOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
 
   const handleSelectVenue = (venueEvents: EventWithVenue[]) => {
@@ -43,8 +39,7 @@ export default function Index() {
   };
 
   const { data: events = [], isLoading } = useEvents(filters);
-  const { user, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut } = useAuth();
-  const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks(user);
+  const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks();
 
   return (
     <div className="h-screen w-screen overflow-hidden relative">
@@ -58,24 +53,10 @@ export default function Index() {
       {/* Logo */}
       <LogoMark />
 
-      {/* Auth buttons */}
-      <HeaderBar
-        user={user}
-        onLoginClick={() => setAuthOpen(true)}
-        onSignupClick={() => setAuthOpen(true)}
-        onLogout={() => signOut()}
-        onSavedClick={() => setSavedOpen(true)}
-        savedCount={bookmarks.length}
-      />
-
       {/* Filter bar */}
       <FilterBar
         filters={filters}
         onChange={setFilters}
-        user={user}
-        onLoginClick={() => setAuthOpen(true)}
-        onSignupClick={() => setAuthOpen(true)}
-        onLogout={() => signOut()}
         onSavedClick={() => setSavedOpen(true)}
         savedCount={bookmarks.length}
       />
@@ -101,13 +82,11 @@ export default function Index() {
           isBookmarked={isBookmarked(selectedEvent.id)}
           onToggleBookmark={() => {
             if (isBookmarked(selectedEvent.id)) {
-              removeBookmark.mutate(selectedEvent.id);
+              removeBookmark(selectedEvent.id);
             } else {
-              addBookmark.mutate(selectedEvent.id);
+              addBookmark(selectedEvent);
             }
           }}
-          isLoggedIn={!!user}
-          onLoginRequired={() => setAuthOpen(true)}
         />
       )}
 
@@ -117,18 +96,9 @@ export default function Index() {
           bookmarks={bookmarks}
           onClose={() => setSavedOpen(false)}
           onSelectEvent={(e) => { setSelectedEvent(e); setSavedOpen(false); }}
-          onRemoveBookmark={(id) => removeBookmark.mutate(id)}
+          onRemoveBookmark={(id) => removeBookmark(id)}
         />
       )}
-
-      {/* Auth modal */}
-      <AuthModal
-        open={authOpen}
-        onOpenChange={setAuthOpen}
-        onSignIn={signInWithEmail}
-        onSignUp={signUpWithEmail}
-        onGoogleSignIn={signInWithGoogle}
-      />
 
       {/* Loading state */}
       {isLoading && (

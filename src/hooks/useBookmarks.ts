@@ -1,47 +1,48 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useState, useCallback } from "react";
+import type { EventWithVenue } from "@/types";
 
-export function useBookmarks(user: User | null) {
-  const queryClient = useQueryClient();
+const STORAGE_KEY = "backstagemap_bookmarks";
 
-  const bookmarksQuery = useQuery({
-    queryKey: ["bookmarks", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("bookmarks")
-        .select("*, events(*, venues(*))")
-        .eq("user_id", user!.id);
-      if (error) throw error;
-      return data;
-    },
-  });
+function loadFromStorage(): EventWithVenue[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
-  const addBookmark = useMutation({
-    mutationFn: async (eventId: string) => {
-      const { error } = await supabase
-        .from("bookmarks")
-        .insert({ user_id: user!.id, event_id: eventId });
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bookmarks"] }),
-  });
+function saveToStorage(events: EventWithVenue[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+}
 
-  const removeBookmark = useMutation({
-    mutationFn: async (eventId: string) => {
-      const { error } = await supabase
-        .from("bookmarks")
-        .delete()
-        .eq("user_id", user!.id)
-        .eq("event_id", eventId);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bookmarks"] }),
-  });
+export function useBookmarks() {
+  const [bookmarked, setBookmarked] = useState<EventWithVenue[]>(loadFromStorage);
 
-  const isBookmarked = (eventId: string) =>
-    bookmarksQuery.data?.some((b) => b.event_id === eventId) ?? false;
+  const addBookmark = useCallback((event: EventWithVenue) => {
+    setBookmarked((prev) => {
+      if (prev.some((e) => e.id === event.id)) return prev;
+      const next = [...prev, event];
+      saveToStorage(next);
+      return next;
+    });
+  }, []);
 
-  return { bookmarks: bookmarksQuery.data ?? [], isBookmarked, addBookmark, removeBookmark, loading: bookmarksQuery.isLoading };
+  const removeBookmark = useCallback((eventId: string) => {
+    setBookmarked((prev) => {
+      const next = prev.filter((e) => e.id !== eventId);
+      saveToStorage(next);
+      return next;
+    });
+  }, []);
+
+  const isBookmarked = useCallback(
+    (eventId: string) => bookmarked.some((e) => e.id === eventId),
+    [bookmarked]
+  );
+
+  // Shape expected by SavedEventsPanel: { id, events: EventWithVenue }[]
+  const bookmarks = bookmarked.map((e) => ({ id: e.id, events: e }));
+
+  return { bookmarks, isBookmarked, addBookmark, removeBookmark };
 }
