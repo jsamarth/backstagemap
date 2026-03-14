@@ -1,20 +1,29 @@
 import { useState } from "react";
-import { Calendar, Music, DollarSign, Clock, X } from "lucide-react";
+import { Calendar, Music, DollarSign, Clock, X, Menu, Bookmark, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { FilterState, EventTypeKey, PriceTypeKey } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, PRICE_TYPE_LABELS } from "@/types";
 import { format, addDays, nextSaturday, nextSunday } from "date-fns";
+import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface FilterBarProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
+  user: AuthUser | null;
+  onLoginClick: () => void;
+  onSignupClick: () => void;
+  onLogout: () => void;
+  onSavedClick: () => void;
+  savedCount: number;
 }
 
-export function FilterBar({ filters, onChange }: FilterBarProps) {
+export function FilterBar({ filters, onChange, user, onLoginClick, onSignupClick, onLogout, onSavedClick, savedCount }: FilterBarProps) {
   const today = new Date();
+  const [menuOpen, setMenuOpen] = useState(false);
   const activeCount =
     (filters.date ? 1 : 0) +
     filters.eventTypes.length +
@@ -36,7 +45,8 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm" className={`rounded-full gap-1.5 text-xs font-body ${filters.date ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}>
             <Calendar className="w-3.5 h-3.5" />
-            {filters.date ? format(new Date(filters.date + "T12:00:00"), "MMM d") : "Date"}
+            <span className="hidden sm:inline">{filters.date ? format(new Date(filters.date + "T12:00:00"), "MMM d") : "Date"}</span>
+            {filters.date && <span className="sm:hidden">{format(new Date(filters.date + "T12:00:00"), "MMM d")}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
@@ -60,7 +70,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm" className={`rounded-full gap-1.5 text-xs font-body ${filters.eventTypes.length ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}>
             <Music className="w-3.5 h-3.5" />
-            {filters.eventTypes.length ? `${filters.eventTypes.length} type${filters.eventTypes.length > 1 ? "s" : ""}` : "Type"}
+            <span className="hidden sm:inline">{filters.eventTypes.length ? `${filters.eventTypes.length} type${filters.eventTypes.length > 1 ? "s" : ""}` : "Type"}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-48 bg-card border-border" align="start">
@@ -81,7 +91,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm" className={`rounded-full gap-1.5 text-xs font-body ${filters.priceTypes.length ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}>
             <DollarSign className="w-3.5 h-3.5" />
-            {filters.priceTypes.length ? filters.priceTypes.map(p => PRICE_TYPE_LABELS[p]).join(", ") : "Price"}
+            <span className="hidden sm:inline">{filters.priceTypes.length ? filters.priceTypes.map(p => PRICE_TYPE_LABELS[p]).join(", ") : "Price"}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-40 bg-card border-border" align="start">
@@ -101,7 +111,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm" className={`rounded-full gap-1.5 text-xs font-body ${filters.timeOfDay.length ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}>
             <Clock className="w-3.5 h-3.5" />
-            Time
+            <span className="hidden sm:inline">Time</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-44 bg-card border-border" align="start">
@@ -119,9 +129,62 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
       {activeCount > 0 && (
         <Button variant="ghost" size="sm" className="rounded-full text-xs text-muted-foreground gap-1" onClick={clearAll}>
           <X className="w-3 h-3" />
-          Clear
+          <span className="hidden sm:inline">Clear</span>
         </Button>
       )}
+
+      {/* Mobile menu — only visible on small screens */}
+      <div className="sm:hidden">
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground px-2">
+              <Menu className="w-4 h-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-64 bg-card border-border flex flex-col gap-4 pt-12">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="truncate">{user.email}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2 rounded-lg font-body text-sm"
+                  onClick={() => { onSavedClick(); setMenuOpen(false); }}
+                >
+                  <Bookmark className="w-4 h-4" />
+                  Saved{savedCount > 0 && ` (${savedCount})`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2 rounded-lg font-body text-sm text-muted-foreground"
+                  onClick={() => { onLogout(); setMenuOpen(false); }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2 rounded-lg font-body text-sm"
+                  onClick={() => { onLoginClick(); setMenuOpen(false); }}
+                >
+                  Log In
+                </Button>
+                <Button
+                  className="rounded-lg font-body text-sm"
+                  onClick={() => { onSignupClick(); setMenuOpen(false); }}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
     </div>
   );
 }

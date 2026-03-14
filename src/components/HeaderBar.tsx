@@ -13,7 +13,7 @@ interface HeaderBarProps {
 
 export function HeaderBar({ user, onLoginClick, onSignupClick, onLogout, onSavedClick, savedCount }: HeaderBarProps) {
   return (
-    <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+    <div className="absolute top-4 right-4 z-20 hidden sm:flex items-center gap-2">
       {user ? (
         <>
           <Button

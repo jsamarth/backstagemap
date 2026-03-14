@@ -69,7 +69,16 @@ export default function Index() {
       />
 
       {/* Filter bar */}
-      <FilterBar filters={filters} onChange={setFilters} />
+      <FilterBar
+        filters={filters}
+        onChange={setFilters}
+        user={user}
+        onLoginClick={() => setAuthOpen(true)}
+        onSignupClick={() => setAuthOpen(true)}
+        onLogout={() => signOut()}
+        onSavedClick={() => setSavedOpen(true)}
+        savedCount={bookmarks.length}
+      />
 
       {/* Legend */}
       <EventLegend />
