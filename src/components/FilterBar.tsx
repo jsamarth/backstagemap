@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Calendar, MapPin, Music, DollarSign, Clock, X, Filter } from "lucide-react";
+import { Calendar, Music, DollarSign, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
-import type { FilterState, EventTypeKey, NeighborhoodKey, PriceTypeKey } from "@/types";
-import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS, PRICE_TYPE_LABELS } from "@/types";
+import type { FilterState, EventTypeKey, PriceTypeKey } from "@/types";
+import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, PRICE_TYPE_LABELS } from "@/types";
 import { format, addDays, nextSaturday, nextSunday } from "date-fns";
 
 interface FilterBarProps {
@@ -17,13 +17,12 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
   const today = new Date();
   const activeCount =
     (filters.date ? 1 : 0) +
-    filters.neighborhoods.length +
     filters.eventTypes.length +
     filters.priceTypes.length +
     filters.timeOfDay.length;
 
   const clearAll = () =>
-    onChange({ date: null, neighborhoods: [], eventTypes: [], priceTypes: [], timeOfDay: [] });
+    onChange({ date: null, eventTypes: [], priceTypes: [], timeOfDay: [] });
 
   const setDate = (d: string | null) => onChange({ ...filters, date: d });
 
@@ -53,26 +52,6 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
               <Button variant="ghost" size="sm" className="text-xs w-full" onClick={() => setDate(null)}>Clear date</Button>
             </div>
           )}
-        </PopoverContent>
-      </Popover>
-
-      {/* Neighborhood filter */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className={`rounded-full gap-1.5 text-xs font-body ${filters.neighborhoods.length ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}>
-            <MapPin className="w-3.5 h-3.5" />
-            {filters.neighborhoods.length ? `${filters.neighborhoods.length} area${filters.neighborhoods.length > 1 ? "s" : ""}` : "Area"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-52 bg-card border-border" align="start">
-          <div className="space-y-2">
-            {(Object.entries(NEIGHBORHOOD_LABELS) as [NeighborhoodKey, string][]).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
-                <Checkbox checked={filters.neighborhoods.includes(key)} onCheckedChange={() => onChange({ ...filters, neighborhoods: toggleArray(filters.neighborhoods, key) })} />
-                {label}
-              </label>
-            ))}
-          </div>
         </PopoverContent>
       </Popover>
 

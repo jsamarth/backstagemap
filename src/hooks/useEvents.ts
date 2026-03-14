@@ -29,13 +29,6 @@ export function useEvents(filters: FilterState) {
 
       let results = (data as EventWithVenue[]) || [];
 
-      // Client-side neighborhood filter
-      if (filters.neighborhoods.length > 0) {
-        results = results.filter((e) =>
-          filters.neighborhoods.includes(e.venues.neighborhood as any)
-        );
-      }
-
       // Client-side time-of-day filter
       if (filters.timeOfDay.length > 0) {
         results = results.filter((e) => {
