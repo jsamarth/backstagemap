@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -9,9 +9,9 @@ const supabase = createClient(
 const FAIL_THRESHOLD = 5
 const BATCH_SIZE = 30
 
-export async function GET(request: NextRequest) {
-  if (request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   // Prune past events (keep yesterday's in case of timezone edge cases)
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      const firecrawlRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
         method:  'POST',
         headers: {
           Authorization:  `Bearer ${process.env.FIRECRAWL_API_KEY}`,
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         }),
       })
 
-      const data = await res.json()
+      const data = await firecrawlRes.json()
       if (!data.success) throw new Error(data.error ?? 'Firecrawl returned success=false')
 
       const timestamp   = new Date().toISOString()
@@ -69,15 +69,12 @@ export async function GET(request: NextRequest) {
 
       if (uploadErr) throw uploadErr
 
-      const { error: updateErr } = await supabase.from('venues').update({
+      await supabase.from('venues').update({
         raw_html_url:    storagePath,
-        scraped_url:     targetUrl,
         last_scraped_at: timestamp,
         scrape_status:   'html_scraped' as any,
         scrape_error:    null,
       }).eq('id', venue.id)
-
-      if (updateErr) throw updateErr
 
       await supabase.from('scrape_logs').insert({
         venue_id: venue.id,
@@ -108,5 +105,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ scraped, failed, skipped: 0 })
+  return res.status(200).json({ scraped, failed })
 }

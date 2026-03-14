@@ -94,12 +94,15 @@ for (let i = 0; i < (venues ?? []).length; i++) {
 
     if (uploadErr) throw uploadErr
 
-    await supabase.from('venues').update({
+    const { error: updateErr } = await supabase.from('venues').update({
       raw_html_url:    storagePath,
+      scraped_url:     targetUrl,
       last_scraped_at: timestamp,
       scrape_status:   'html_scraped' as any,
       scrape_error:    null,
     }).eq('id', venue.id)
+
+    if (updateErr) throw updateErr
 
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,

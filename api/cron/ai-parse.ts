@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 
@@ -53,14 +53,14 @@ type ExtractedEvent = {
   event_type:   'live_band' | 'dj' | 'open_mic' | 'jam_session'
 }
 
-export async function GET(request: NextRequest) {
-  if (request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   const { data: venues } = await supabase
     .from('venues')
-    .select('id, raw_html_url, scraped_url, website_url')
+    .select('id, raw_html_url')
     .eq('scrape_status', 'html_scraped')
 
   let parsed = 0
@@ -76,7 +76,6 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Download raw markdown from Supabase Storage
       const { data: fileData, error: storageErr } = await supabase.storage
         .from(process.env.SCRAPE_STORAGE_BUCKET ?? 'html-scrapes')
         .download(venue.raw_html_url)
@@ -85,22 +84,21 @@ export async function GET(request: NextRequest) {
 
       const markdown = await fileData.text()
 
-      // Call GPT-4o with function calling for structured extraction
       const completion = await openai.chat.completions.create({
         model:       'gpt-4o',
         temperature: 0,
         messages: [
           {
             role:    'system',
-            content: `You are a structured data extractor. Today's date is ${today}. Extract all upcoming music events from the provided venue calendar page. Return only events with dates on or after today. If a field is not present in the source material, return null for that field. When a date appears without a year, infer the year as follows: if the month/day falls on or after today, use the current year; otherwise use the next year. Always return dates in YYYY-MM-DD format.`,
+            content: `You are a structured data extractor. Today's date is ${today}. Extract all upcoming music events from the provided venue calendar page. Return only events with dates on or after today. If a field is not present in the source material, return null for that field.`,
           },
           {
             role:    'user',
             content: markdown,
           },
         ],
-        tools:        [extractEventsTool],
-        tool_choice:  { type: 'function', function: { name: 'extract_events' } },
+        tools:       [extractEventsTool],
+        tool_choice: { type: 'function', function: { name: 'extract_events' } },
       })
 
       const toolCall = completion.choices[0]?.message?.tool_calls?.[0]
@@ -121,7 +119,6 @@ export async function GET(request: NextRequest) {
             price_amount: event.price_amount,
             description:  event.description,
             event_type:   event.event_type,
-            source_url:   venue.scraped_url ?? venue.website_url ?? null,
             parsed_at:    new Date().toISOString(),
           },
           { onConflict: 'venue_id,date,event_name' }
@@ -152,5 +149,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ parsed, events_upserted: eventsUpserted, errors })
+  return res.status(200).json({ parsed, events_upserted: eventsUpserted, errors })
 }

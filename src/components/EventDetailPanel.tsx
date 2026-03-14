@@ -162,9 +162,9 @@ function PanelContent({
           {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           {isBookmarked ? "Saved" : "Save"}
         </Button>
-        {event.source_url && (
+        {(event.source_url ?? event.venues.website_url) && (
           <Button variant="outline" className="gap-2" asChild>
-            <a href={event.source_url} target="_blank" rel="noopener noreferrer">
+            <a href={event.source_url ?? event.venues.website_url!} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-4 h-4" />
               Source
             </a>

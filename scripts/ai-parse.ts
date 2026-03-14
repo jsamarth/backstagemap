@@ -67,7 +67,7 @@ log('info', `Starting ai-parse${isFinite(LIMIT) ? ` — limit: ${LIMIT}` : ''}`)
 
 const { data: allVenues } = await supabase
   .from('venues')
-  .select('id, name, raw_html_url')
+  .select('id, name, raw_html_url, scraped_url, website_url')
   .eq('scrape_status', 'html_scraped')
 
 const venues = isFinite(LIMIT) ? (allVenues ?? []).slice(0, LIMIT) : (allVenues ?? [])
@@ -111,7 +111,7 @@ for (let i = 0; i < venues.length; i++) {
       messages: [
         {
           role:    'system',
-          content: `You are a structured data extractor. Today's date is ${today}. Extract all upcoming music events from the provided venue calendar page. Return only events with dates on or after today. If a field is not present in the source material, return null for that field.`,
+          content: `You are a structured data extractor. Today's date is ${today}. Extract all upcoming music events from the provided venue calendar page. Return only events with dates on or after today. If a field is not present in the source material, return null for that field. When a date appears without a year, infer the year as follows: if the month/day falls on or after today, use the current year; otherwise use the next year. Always return dates in YYYY-MM-DD format.`,
         },
         {
           role:    'user',
@@ -141,6 +141,7 @@ for (let i = 0; i < venues.length; i++) {
           price_amount: event.price_amount,
           description:  event.description,
           event_type:   event.event_type,
+          source_url:   (venue as any).scraped_url ?? (venue as any).website_url ?? null,
           parsed_at:    new Date().toISOString(),
         },
         { onConflict: 'venue_id,date,event_name' }
