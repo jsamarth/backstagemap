@@ -46,6 +46,7 @@ export function MapView({ events, selectedEventId, onSelectEvent }: MapViewProps
       style={{ width: "100%", height: "100%" }}
       mapStyle={MAP_STYLE}
       attributionControl={true}
+      minZoom={NYC_CENTER.zoom}
     >
       <NavigationControl position="bottom-right" showCompass={false} />
       {events.map((event) => {
