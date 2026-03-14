@@ -31,7 +31,7 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount }: Filte
     arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg max-w-[95vw] overflow-x-auto">
+    <div className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg max-w-[calc(100vw-5rem)] overflow-x-auto">
       {/* Date filter */}
       <Popover>
         <PopoverTrigger asChild>

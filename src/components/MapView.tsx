@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ReactMap, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { EventWithVenue, EventTypeKey } from "@/types";
@@ -40,6 +40,8 @@ const MAP_STYLE = {
 };
 
 export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps) {
+  const [aboutOpen, setAboutOpen] = useState(false);
+
   const venueGroups = useMemo(() => {
     const map = new Map<string, EventWithVenue[]>();
     for (const event of events) {
@@ -62,11 +64,12 @@ export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps
   }, [events]);
 
   return (
+    <div className="relative w-full h-full">
     <ReactMap
       initialViewState={NYC_CENTER}
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
       mapStyle={MAP_STYLE}
-      attributionControl={true}
+      attributionControl={false}
       minZoom={NYC_CENTER.zoom}
     >
       <NavigationControl position="bottom-right" showCompass={false} />
@@ -98,5 +101,28 @@ export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps
         );
       })}
     </ReactMap>
+    <div className="absolute bottom-2 left-2">
+      <button
+        onClick={() => setAboutOpen((o) => !o)}
+        className="w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 text-white/50 hover:text-white/80 hover:border-white/30 transition-colors flex items-center justify-center text-[10px] font-semibold"
+        aria-label="About"
+      >
+        i
+      </button>
+      {aboutOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setAboutOpen(false)} />
+          <div className="absolute bottom-7 left-0 z-50 w-56 rounded-lg bg-card/95 backdrop-blur-md border border-border p-3 shadow-lg text-xs text-muted-foreground font-body space-y-1.5">
+            <p className="font-semibold text-foreground text-sm">BackstageMap</p>
+            <p>Discover live music in NYC.</p>
+            <div className="border-t border-border pt-1.5 space-y-1">
+              <p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">OpenStreetMap</a> contributors</p>
+              <p>Tiles © <a href="https://carto.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">CARTO</a></p>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+    </div>
   );
 }
