@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MapView } from "@/components/MapView";
 import { FilterBar } from "@/components/FilterBar";
 import { EventDetailPanel } from "@/components/EventDetailPanel";
+import { VenueEventsPanel } from "@/components/VenueEventsPanel";
 import { EventLegend } from "@/components/EventLegend";
 import { HeaderBar } from "@/components/HeaderBar";
 import { LogoMark } from "@/components/LogoMark";
@@ -22,9 +23,25 @@ const defaultFilters: FilterState = {
 
 export default function Index() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [selectedVenueEvents, setSelectedVenueEvents] = useState<EventWithVenue[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+
+  const handleSelectVenue = (venueEvents: EventWithVenue[]) => {
+    if (venueEvents.length === 1) {
+      setSelectedVenueEvents(null);
+      setSelectedEvent(venueEvents[0]);
+    } else {
+      setSelectedVenueEvents(venueEvents);
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleCloseAll = () => {
+    setSelectedVenueEvents(null);
+    setSelectedEvent(null);
+  };
 
   const { data: events = [], isLoading } = useEvents(filters);
   const { user, signInWithEmail, signUpWithEmail, signInWithGoogle, signOut } = useAuth();
@@ -35,8 +52,8 @@ export default function Index() {
       {/* Map fills entire viewport */}
       <MapView
         events={events}
-        selectedEventId={selectedEvent?.id ?? null}
-        onSelectEvent={setSelectedEvent}
+        selectedVenueId={selectedVenueEvents?.[0]?.venue_id ?? selectedEvent?.venue_id ?? null}
+        onSelectVenue={handleSelectVenue}
       />
 
       {/* Logo */}
@@ -58,11 +75,21 @@ export default function Index() {
       {/* Legend */}
       <EventLegend />
 
+      {/* Venue events list panel */}
+      {selectedVenueEvents && !selectedEvent && (
+        <VenueEventsPanel
+          events={selectedVenueEvents}
+          onClose={handleCloseAll}
+          onSelectEvent={setSelectedEvent}
+        />
+      )}
+
       {/* Event detail panel */}
       {selectedEvent && (
         <EventDetailPanel
           event={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
+          onClose={handleCloseAll}
+          onBack={selectedVenueEvents ? () => setSelectedEvent(null) : undefined}
           isBookmarked={isBookmarked(selectedEvent.id)}
           onToggleBookmark={() => {
             if (isBookmarked(selectedEvent.id)) {

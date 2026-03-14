@@ -1,4 +1,4 @@
-import { X, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music } from "lucide-react";
+import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventWithVenue, EventTypeKey } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS, PRICE_TYPE_LABELS } from "@/types";
@@ -7,6 +7,7 @@ import { format } from "date-fns";
 interface EventDetailPanelProps {
   event: EventWithVenue;
   onClose: () => void;
+  onBack?: () => void;
   isBookmarked: boolean;
   onToggleBookmark: () => void;
   isLoggedIn: boolean;
@@ -16,6 +17,7 @@ interface EventDetailPanelProps {
 export function EventDetailPanel({
   event,
   onClose,
+  onBack,
   isBookmarked,
   onToggleBookmark,
   isLoggedIn,
@@ -48,6 +50,7 @@ export function EventDetailPanel({
           event={event}
           eventType={eventType}
           onClose={onClose}
+          onBack={onBack}
           isBookmarked={isBookmarked}
           onBookmark={handleBookmark}
           formatTime={formatTime}
@@ -61,6 +64,7 @@ export function EventDetailPanel({
           event={event}
           eventType={eventType}
           onClose={onClose}
+          onBack={onBack}
           isBookmarked={isBookmarked}
           onBookmark={handleBookmark}
           formatTime={formatTime}
@@ -77,6 +81,7 @@ function PanelContent({
   event,
   eventType,
   onClose,
+  onBack,
   isBookmarked,
   onBookmark,
   formatTime,
@@ -84,6 +89,7 @@ function PanelContent({
   event: EventWithVenue;
   eventType: EventTypeKey;
   onClose: () => void;
+  onBack?: () => void;
   isBookmarked: boolean;
   onBookmark: () => void;
   formatTime: (t: string | null) => string;
@@ -92,17 +98,24 @@ function PanelContent({
     <div className="p-5 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="space-y-1 flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full ${EVENT_TYPE_COLORS[eventType]}`} />
-            <span className="text-xs font-body text-muted-foreground uppercase tracking-wider">
-              {EVENT_TYPE_LABELS[eventType]}
-            </span>
-          </div>
-          <h2 className="text-xl font-display font-bold truncate">{event.event_name}</h2>
-          {event.artist_name && (
-            <p className="text-sm text-muted-foreground font-body">{event.artist_name}</p>
+        <div className="flex items-start gap-1 flex-1 min-w-0">
+          {onBack && (
+            <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0 -mt-1 -ml-2">
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
           )}
+          <div className="space-y-1 flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${EVENT_TYPE_COLORS[eventType]}`} />
+              <span className="text-xs font-body text-muted-foreground uppercase tracking-wider">
+                {EVENT_TYPE_LABELS[eventType]}
+              </span>
+            </div>
+            <h2 className="text-xl font-display font-bold truncate">{event.event_name}</h2>
+            {event.artist_name && (
+              <p className="text-sm text-muted-foreground font-body">{event.artist_name}</p>
+            )}
+          </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 -mt-1 -mr-2">
           <X className="w-5 h-5" />
