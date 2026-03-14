@@ -13,7 +13,7 @@ function require(name: string, ...aliases: string[]): string {
 }
 
 export const SUPABASE_URL      = require('NEXT_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL')
-export const SUPABASE_KEY      = require('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY', 'SUPABASE_SERVICE_ROLE_KEY')
+export const SUPABASE_KEY      = require('SUPABASE_SERVICE_ROLE_KEY')
 export const STORAGE_BUCKET    = process.env.SCRAPE_STORAGE_BUCKET ?? 'html-scrapes'
 export const GOOGLE_MAPS_KEY   = process.env.GOOGLE_MAPS_API_KEY
 export const FIRECRAWL_KEY     = process.env.FIRECRAWL_API_KEY
