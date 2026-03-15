@@ -161,7 +161,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_event_view: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
+      increment_source_url_click: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
+      increment_event_upvote: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
+      increment_event_downvote: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       event_type: "live_band" | "dj" | "open_mic" | "jam_session"
@@ -299,6 +314,8 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export type AnalyticsRpc = keyof DefaultSchema["Functions"];
 
 export const Constants = {
   public: {

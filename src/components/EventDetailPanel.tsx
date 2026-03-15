@@ -1,8 +1,10 @@
-import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventWithVenue, EventTypeKey } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS, PRICE_TYPE_LABELS } from "@/types";
 import { format } from "date-fns";
+import { useEventAnalytics } from "@/hooks/useEventAnalytics";
 
 interface EventDetailPanelProps {
   event: EventWithVenue;
@@ -20,6 +22,11 @@ export function EventDetailPanel({
   onToggleBookmark,
 }: EventDetailPanelProps) {
   const eventType = event.event_type as EventTypeKey;
+  const { trackView, trackSourceClick, getRating, submitVote } = useEventAnalytics();
+
+  useEffect(() => {
+    trackView(event.id);
+  }, [event.id]);
 
   const handleBookmark = () => {
     onToggleBookmark();
@@ -34,6 +41,16 @@ export function EventDetailPanel({
     return `${displayHour}:${m} ${ampm}`;
   };
 
+  const existingRating = getRating(event.id);
+
+  const handleVote = (vote: "up" | "down") => {
+    submitVote(event.id, vote);
+  };
+
+  const handleSourceClick = () => {
+    trackSourceClick(event.id);
+  };
+
   return (
     <>
       {/* Desktop: side panel */}
@@ -46,6 +63,9 @@ export function EventDetailPanel({
           isBookmarked={isBookmarked}
           onBookmark={handleBookmark}
           formatTime={formatTime}
+          onSourceClick={handleSourceClick}
+          onVote={handleVote}
+          existingRating={existingRating}
         />
       </div>
 
@@ -60,6 +80,9 @@ export function EventDetailPanel({
           isBookmarked={isBookmarked}
           onBookmark={handleBookmark}
           formatTime={formatTime}
+          onSourceClick={handleSourceClick}
+          onVote={handleVote}
+          existingRating={existingRating}
         />
       </div>
 
@@ -77,6 +100,9 @@ function PanelContent({
   isBookmarked,
   onBookmark,
   formatTime,
+  onSourceClick,
+  onVote,
+  existingRating,
 }: {
   event: EventWithVenue;
   eventType: EventTypeKey;
@@ -85,7 +111,13 @@ function PanelContent({
   isBookmarked: boolean;
   onBookmark: () => void;
   formatTime: (t: string | null) => string;
+  onSourceClick: () => void;
+  onVote: (v: "up" | "down") => void;
+  existingRating: "up" | "down" | null;
 }) {
+  const [localRating, setLocalRating] = useState<"up" | "down" | null>(existingRating);
+  const [voted, setVoted] = useState(!!existingRating);
+
   return (
     <div className="p-5 space-y-4">
       {/* Header */}
@@ -122,7 +154,14 @@ function PanelContent({
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <MapPin className="w-4 h-4 shrink-0" />
-          <span className="text-xs font-body">{event.venues.address}</span>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venues.address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-body hover:underline"
+          >
+            {event.venues.address}
+          </a>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="text-xs font-body capitalize">{NEIGHBORHOOD_LABELS[event.venues.neighborhood as keyof typeof NEIGHBORHOOD_LABELS]}</span>
@@ -169,12 +208,40 @@ function PanelContent({
         </Button>
         {(event.source_url ?? event.venues.website_url) && (
           <Button variant="outline" className="gap-2" asChild>
-            <a href={event.source_url ?? event.venues.website_url!} target="_blank" rel="noopener noreferrer">
+            <a
+              href={event.source_url ?? event.venues.website_url!}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onSourceClick}
+            >
               <ExternalLink className="w-4 h-4" />
               Source
             </a>
           </Button>
         )}
+      </div>
+
+      {/* Accurate info? */}
+      <div
+        className={`flex items-center gap-3 text-sm text-muted-foreground transition-all duration-300 ${voted ? "opacity-0 pointer-events-none -mt-4 h-0 overflow-hidden" : "opacity-100"}`}
+      >
+        <span className="font-body">Accurate info?</span>
+        <Button
+          variant="ghost" size="icon"
+          disabled={!!localRating}
+          onClick={() => { setLocalRating("up"); setVoted(true); onVote("up"); }}
+          className={localRating === "up" ? "text-green-500" : ""}
+        >
+          <ThumbsUp className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost" size="icon"
+          disabled={!!localRating}
+          onClick={() => { setLocalRating("down"); setVoted(true); onVote("down"); }}
+          className={localRating === "down" ? "text-red-400" : ""}
+        >
+          <ThumbsDown className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
