@@ -14,7 +14,8 @@
     "scrape:discovery": "bun run scripts/venue-discovery.ts",
     "scrape:html": "bun run scripts/html-scrape.ts",
     "scrape:parse": "bun run scripts/ai-parse.ts",
-    "scrape:reset": "bun run scripts/freshness-reset.ts"
+    "scrape:reset": "bun run scripts/freshness-reset.ts",
+    "scrape:debug-parse": "bun run scripts/debug-parse.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -57,6 +58,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "maplibre-gl": "4.7.1",
+    "next-server": "^9.0.5",
     "next-themes": "^0.3.0",
     "openai": "^6.27.0",
     "react": "^18.3.1",

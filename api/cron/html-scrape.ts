@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await supabase.from('venues').update({
         raw_html_url:    storagePath,
         last_scraped_at: timestamp,
-        scrape_status:   'html_scraped' as any,
+        scrape_status:   'html_scraped' as string,
         scrape_error:    null,
       }).eq('id', venue.id)
 
@@ -83,14 +83,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
 
       scraped++
-    } catch (err: any) {
+    } catch (err: unknown) {
       const newFailCount = (venue.scrape_fail_count ?? 0) + 1
       const update: Record<string, unknown> = {
-        scrape_error:      err.message,
+        scrape_error:      (err as Error).message,
         scrape_fail_count: newFailCount,
       }
       if (newFailCount >= FAIL_THRESHOLD) {
-        update.scrape_status = 'failed' as any
+        update.scrape_status = 'failed'
       }
 
       await supabase.from('venues').update(update).eq('id', venue.id)
@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         venue_id: venue.id,
         workflow: 'html_scrape',
         status:   'failure',
-        error:    err.message,
+        error:    (err as Error).message,
       })
 
       failed++

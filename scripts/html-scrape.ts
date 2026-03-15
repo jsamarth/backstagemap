@@ -47,7 +47,7 @@ let failed = 0
 for (let i = 0; i < (venues ?? []).length; i++) {
   const venue = venues![i]
   const targetUrl = venue.website_url
-  const venueName = (venue as any).name ?? venue.id
+  const venueName = venue.name ?? venue.id
 
   log('info', `[${i + 1}/${total}] "${venueName}" — scraping ${targetUrl ?? '(no URL)'} ...`)
 
@@ -98,7 +98,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
       raw_html_url:    storagePath,
       scraped_url:     targetUrl,
       last_scraped_at: timestamp,
-      scrape_status:   'html_scraped' as any,
+      scrape_status:   'html_scraped' as string,
       scrape_error:    null,
     }).eq('id', venue.id)
 
@@ -111,17 +111,17 @@ for (let i = 0; i < (venues ?? []).length; i++) {
     })
 
     scraped++
-  } catch (err: any) {
+  } catch (err: unknown) {
     const newFailCount = (venue.scrape_fail_count ?? 0) + 1
-    log('error', `  Scrape failed: ${err.message}`)
+    log('error', `  Scrape failed: ${(err as Error).message}`)
     log('info', `  scrape_fail_count now ${newFailCount} (threshold ${FAIL_THRESHOLD})`)
 
     const update: Record<string, unknown> = {
-      scrape_error:      err.message,
+      scrape_error:      (err as Error).message,
       scrape_fail_count: newFailCount,
     }
     if (newFailCount >= FAIL_THRESHOLD) {
-      update.scrape_status = 'failed' as any
+      update.scrape_status = 'failed'
       log('warn', `  Marking as failed (${FAIL_THRESHOLD}+ consecutive failures)`)
     }
 
@@ -130,7 +130,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
       venue_id: venue.id,
       workflow: 'html_scrape',
       status:   'failure',
-      error:    err.message,
+      error:    (err as Error).message,
     })
 
     failed++

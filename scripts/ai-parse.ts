@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
+import { resolve } from 'path'
 import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET, OPENAI_KEY } from './_env'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -60,6 +61,11 @@ type ExtractedEvent = {
   event_type:   'live_band' | 'dj' | 'open_mic' | 'jam_session'
 }
 
+const PROMPTS_DIR = resolve(import.meta.dir, '..', 'prompts')
+const today = new Date().toISOString().split('T')[0]
+const systemPrompt = (await Bun.file(`${PROMPTS_DIR}/ai-parse-system.txt`).text())
+  .replace('{{TODAY}}', today)
+
 const limitArg = getArg('--limit')
 const LIMIT = limitArg ? parseInt(limitArg, 10) : Infinity
 
@@ -78,11 +84,9 @@ let parsed = 0
 let eventsUpserted = 0
 let errors = 0
 
-const today = new Date().toISOString().split('T')[0]
-
 for (let i = 0; i < venues.length; i++) {
   const venue = venues[i]
-  const venueName = (venue as any).name ?? venue.id
+  const venueName = venue.name ?? venue.id
 
   log('info', `[${i + 1}/${total}] Parsing "${venueName}" from ${venue.raw_html_url ?? '(no path)'} ...`)
 
@@ -111,7 +115,7 @@ for (let i = 0; i < venues.length; i++) {
       messages: [
         {
           role:    'system',
-          content: `You are a structured data extractor. Today's date is ${today}. Extract all upcoming music events from the provided venue calendar page. Return only events with dates on or after today. If a field is not present in the source material, return null for that field. When a date appears without a year, infer the year as follows: if the month/day falls on or after today, use the current year; otherwise use the next year. Always return dates in YYYY-MM-DD format.`,
+          content: systemPrompt,
         },
         {
           role:    'user',
@@ -141,7 +145,7 @@ for (let i = 0; i < venues.length; i++) {
           price_amount: event.price_amount,
           description:  event.description,
           event_type:   event.event_type,
-          source_url:   (venue as any).scraped_url ?? (venue as any).website_url ?? null,
+          source_url:   venue.scraped_url ?? venue.website_url ?? null,
           parsed_at:    new Date().toISOString(),
         },
         { onConflict: 'venue_id,date,event_name' }
@@ -155,7 +159,7 @@ for (let i = 0; i < venues.length; i++) {
     }
 
     await supabase.from('venues').update({
-      scrape_status: 'extracted' as any,
+      scrape_status: 'extracted' as string,
       extracted_at:  new Date().toISOString(),
     }).eq('id', venue.id)
 
@@ -166,13 +170,13 @@ for (let i = 0; i < venues.length; i++) {
     })
 
     parsed++
-  } catch (err: any) {
-    log('error', `  Parse failed: ${err.message}`)
+  } catch (err: unknown) {
+    log('error', `  Parse failed: ${(err as Error).message}`)
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
       workflow: 'ai_parse',
       status:   'failure',
-      error:    err.message,
+      error:    (err as Error).message,
     })
     errors++
   }

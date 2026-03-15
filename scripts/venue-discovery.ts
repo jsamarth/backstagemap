@@ -97,13 +97,13 @@ for (const neighborhood of NEIGHBORHOODS) {
         const { error } = await supabase.from('venues').upsert({
           name:                 place.name,
           address:              place.formatted_address,
-          neighborhood:         neighborhood.value as any,
-          venue_type:           'bar' as any,
+          neighborhood:         neighborhood.value as string,
+          venue_type:           'bar' as string,
           latitude:             place.geometry.location.lat,
           longitude:            place.geometry.location.lng,
           google_maps_venue_id: place.place_id,
           website_url:          websiteUrl,
-          scrape_status:        'not_started' as any,
+          scrape_status:        'not_started' as string,
         }, { onConflict: 'google_maps_venue_id' })
 
         if (error) {
@@ -121,11 +121,11 @@ for (const neighborhood of NEIGHBORHOODS) {
           }
         }
       }
-    } catch (err: any) {
-      log('error', `API call failed: ${err.message}`)
+    } catch (err: unknown) {
+      log('error', `API call failed: ${(err as Error).message}`)
       log('error', `Stopping early due to error.`)
       errors++
-      await supabase.from('scrape_logs').insert({ workflow: 'discovery', status: 'failure', error: err.message })
+      await supabase.from('scrape_logs').insert({ workflow: 'discovery', status: 'failure', error: (err as Error).message })
       break outer
     }
   }

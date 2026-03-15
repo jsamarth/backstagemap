@@ -1,13 +1,15 @@
 import { X, MapPin, Clock, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { EventTypeKey } from "@/types";
+import type { EventTypeKey, EventWithVenue } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS } from "@/types";
 import { format } from "date-fns";
 
+type BookmarkEntry = { id: string; events: EventWithVenue };
+
 interface SavedEventsPanelProps {
-  bookmarks: any[];
+  bookmarks: BookmarkEntry[];
   onClose: () => void;
-  onSelectEvent: (event: any) => void;
+  onSelectEvent: (event: EventWithVenue) => void;
   onRemoveBookmark: (eventId: string) => void;
 }
 
@@ -37,7 +39,7 @@ function Content({ bookmarks, onClose, onSelectEvent, onRemoveBookmark }: SavedE
         <p className="text-sm text-muted-foreground font-body py-8 text-center">No saved events yet. Tap the bookmark icon on any event to save it.</p>
       ) : (
         <div className="space-y-3">
-          {bookmarks.map((b: any) => {
+          {bookmarks.map((b) => {
             const event = b.events;
             if (!event) return null;
             const venue = event.venues;

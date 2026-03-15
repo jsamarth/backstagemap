@@ -8,9 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 interface AuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSignIn: (email: string, password: string) => Promise<any>;
-  onSignUp: (email: string, password: string) => Promise<any>;
-  onGoogleSignIn: () => Promise<any>;
+  onSignIn: (email: string, password: string) => Promise<{ error?: { message: string } | null }>;
+  onSignUp: (email: string, password: string) => Promise<{ error?: { message: string } | null }>;
+  onGoogleSignIn: () => Promise<unknown>;
 }
 
 export function AuthModal({ open, onOpenChange, onSignIn, onSignUp, onGoogleSignIn }: AuthModalProps) {

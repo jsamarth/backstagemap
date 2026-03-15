@@ -44,7 +44,7 @@ if (ids.length <= 10) {
 
 const { error } = await supabase
   .from('venues')
-  .update({ scrape_status: 'not_started' as any })
+  .update({ scrape_status: 'not_started' as string })
   .in('id', ids)
 
 if (error) {

@@ -127,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       await supabase.from('venues').update({
-        scrape_status: 'extracted' as any,
+        scrape_status: 'extracted' as string,
         extracted_at:  new Date().toISOString(),
       }).eq('id', venue.id)
 
@@ -138,12 +138,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
 
       parsed++
-    } catch (err: any) {
+    } catch (err: unknown) {
       await supabase.from('scrape_logs').insert({
         venue_id: venue.id,
         workflow: 'ai_parse',
         status:   'failure',
-        error:    err.message,
+        error:    (err as Error).message,
       })
       errors++
     }

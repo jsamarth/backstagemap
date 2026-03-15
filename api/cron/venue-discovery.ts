@@ -65,13 +65,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const { error } = await supabase.from('venues').insert({
             name:                 place.name,
             address:              place.formatted_address,
-            neighborhood:         neighborhood.value as any,
-            venue_type:           'bar' as any,
+            neighborhood:         neighborhood.value as string,
+            venue_type:           'bar' as string,
             latitude:             place.geometry.location.lat,
             longitude:            place.geometry.location.lng,
             google_maps_venue_id: place.place_id,
             website_url:          place.website ?? null,
-            scrape_status:        'not_started' as any,
+            scrape_status:        'not_started' as string,
           })
 
           if (error) {
@@ -89,12 +89,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors++
         await supabase.from('scrape_logs').insert({
           workflow: 'discovery',
           status:   'failure',
-          error:    err.message,
+          error:    (err as Error).message,
         })
       }
     }

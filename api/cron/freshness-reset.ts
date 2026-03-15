@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (ids.length > 0) {
     await supabase
       .from('venues')
-      .update({ scrape_status: 'not_started' as any })
+      .update({ scrape_status: 'not_started' as string })
       .in('id', ids)
   }
 
