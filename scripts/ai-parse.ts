@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { resolve } from 'path'
 import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET, OPENAI_KEY } from './_env'
+import type { ExtractedEvent } from '../src/types'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 const openai = new OpenAI({ apiKey: OPENAI_KEY })
@@ -47,18 +48,6 @@ const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
       },
     },
   },
-}
-
-type ExtractedEvent = {
-  event_name:   string
-  artist_name:  string | null
-  date:         string
-  time_start:   string | null
-  time_end:     string | null
-  price_type:   'free' | 'cover' | 'ticketed'
-  price_amount: number | null
-  description:  string | null
-  event_type:   'live_band' | 'dj' | 'open_mic' | 'jam_session'
 }
 
 const PROMPTS_DIR = resolve(import.meta.dir, '..', 'prompts')

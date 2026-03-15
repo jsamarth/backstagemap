@@ -64,24 +64,47 @@ for (let i = 0; i < (venues ?? []).length; i++) {
   }
 
   try {
-    const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    const crawlRes = await fetch('https://api.firecrawl.dev/v1/crawl', {
       method:  'POST',
       headers: {
         Authorization:  `Bearer ${FIRECRAWL_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url:             targetUrl,
-        formats:         ['markdown'],
-        onlyMainContent: true,
+        url:           targetUrl,
+        limit:         20,
+        scrapeOptions: { formats: ['markdown'], onlyMainContent: false },
       }),
     })
 
-    const data = await res.json()
-    if (!data.success) throw new Error(data.error ?? 'Firecrawl returned success=false')
+    const crawlData = await crawlRes.json()
+    if (!crawlData.success) throw new Error(crawlData.error ?? 'Firecrawl crawl start failed')
 
-    const markdown: string = data.data.markdown
-    log('ok', `  Firecrawl success — ${markdown.length} bytes of markdown`)
+    const crawlId: string = crawlData.id
+    log('info', `  Crawl job started — id=${crawlId}`)
+
+    // Poll until complete (max 3 minutes)
+    let markdown = ''
+    const MAX_POLLS = 36
+    for (let poll = 0; poll < MAX_POLLS; poll++) {
+      await new Promise(r => setTimeout(r, 5000))
+      const statusRes = await fetch(`https://api.firecrawl.dev/v1/crawl/${crawlId}`, {
+        headers: { Authorization: `Bearer ${FIRECRAWL_KEY}` },
+      })
+      const status = await statusRes.json()
+      log('info', `  Poll ${poll + 1}/${MAX_POLLS} — status=${status.status} pages=${status.completed ?? '?'}`)
+      if (status.status === 'completed') {
+        markdown = (status.data as Array<{ markdown?: string }>)
+          .map(p => p.markdown ?? '')
+          .filter(Boolean)
+          .join('\n\n---\n\n')
+        break
+      }
+      if (status.status === 'failed') throw new Error(`Firecrawl crawl failed: ${status.error ?? 'unknown'}`)
+    }
+
+    if (!markdown) throw new Error('Firecrawl crawl timed out or returned no content')
+    log('ok', `  Firecrawl crawl complete — ${markdown.length} bytes of markdown`)
 
     const timestamp   = new Date().toISOString()
     const storagePath = `${venue.id}/${timestamp}.md`

@@ -44,28 +44,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      const firecrawlRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      const crawlRes = await fetch('https://api.firecrawl.dev/v1/crawl', {
         method:  'POST',
         headers: {
           Authorization:  `Bearer ${process.env.FIRECRAWL_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url:             targetUrl,
-          formats:         ['markdown'],
-          onlyMainContent: true,
+          url:           targetUrl,
+          limit:         20,
+          scrapeOptions: { formats: ['markdown'], onlyMainContent: false },
         }),
       })
 
-      const data = await firecrawlRes.json()
-      if (!data.success) throw new Error(data.error ?? 'Firecrawl returned success=false')
+      const crawlData = await crawlRes.json()
+      if (!crawlData.success) throw new Error(crawlData.error ?? 'Firecrawl crawl start failed')
+
+      const crawlId: string = crawlData.id
+
+      // Poll until complete (max 3 minutes)
+      let markdown = ''
+      const MAX_POLLS = 36
+      for (let poll = 0; poll < MAX_POLLS; poll++) {
+        await new Promise(r => setTimeout(r, 5000))
+        const statusRes = await fetch(`https://api.firecrawl.dev/v1/crawl/${crawlId}`, {
+          headers: { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}` },
+        })
+        const status = await statusRes.json()
+        if (status.status === 'completed') {
+          markdown = (status.data as Array<{ markdown?: string }>)
+            .map(p => p.markdown ?? '')
+            .filter(Boolean)
+            .join('\n\n---\n\n')
+          break
+        }
+        if (status.status === 'failed') throw new Error(`Firecrawl crawl failed: ${status.error ?? 'unknown'}`)
+      }
+
+      if (!markdown) throw new Error('Firecrawl crawl timed out or returned no content')
 
       const timestamp   = new Date().toISOString()
       const storagePath = `${venue.id}/${timestamp}.md`
 
       const { error: uploadErr } = await supabase.storage
         .from(process.env.SCRAPE_STORAGE_BUCKET ?? 'html-scrapes')
-        .upload(storagePath, data.data.markdown, { contentType: 'text/markdown' })
+        .upload(storagePath, markdown, { contentType: 'text/markdown' })
 
       if (uploadErr) throw uploadErr
 

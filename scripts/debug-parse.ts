@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { resolve } from 'path'
 import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET, OPENAI_KEY } from './_env'
+import type { ExtractedEvent } from '../src/types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,27 +58,19 @@ const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
   },
 }
 
-type ExtractedEvent = {
-  event_name:   string
-  artist_name:  string | null
-  date:         string
-  time_start:   string | null
-  time_end:     string | null
-  price_type:   'free' | 'cover' | 'ticketed'
-  price_amount: number | null
-  description:  string | null
-  event_type:   'live_band' | 'dj' | 'open_mic' | 'jam_session'
-}
-
 // ── Argument parsing ──────────────────────────────────────────────────────────
 
-const isRandom  = process.argv.includes('--random')
-const eventId   = process.argv[2] !== '--random' ? process.argv[2] : undefined
+const isRandom = process.argv.includes('--random')
+const venueId  = getArg('--venue_id')
 
-if (!isRandom && !eventId) {
+if (!isRandom && !venueId) {
   console.error('Usage:')
-  console.error('  bun run scripts/debug-parse.ts <event_id>')
   console.error('  bun run scripts/debug-parse.ts --random')
+  console.error('  bun run scripts/debug-parse.ts --venue_id <uuid>')
+  process.exit(1)
+}
+if (isRandom && venueId) {
+  console.error('Error: --random and --venue_id are mutually exclusive')
   process.exit(1)
 }
 
@@ -86,7 +79,7 @@ if (!isRandom && !eventId) {
 const wallStart = Date.now()
 
 section('debug-parse — DRY RUN — no data written')
-log('info', `Args: ${isRandom ? '--random' : `event_id=${eventId}`}`)
+log('info', `Args: ${isRandom ? '--random' : `venue_id=${venueId}`}`)
 
 log('info', 'Initializing Supabase client...')
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -96,86 +89,62 @@ log('info', 'Initializing OpenAI client...')
 const openai = new OpenAI({ apiKey: OPENAI_KEY })
 log('ok', 'OpenAI client ready')
 
-// ── Resolve event + venue ─────────────────────────────────────────────────────
+// ── Resolve venue ─────────────────────────────────────────────────────────────
 
-section('Step 1 — Resolve Event + Venue')
+section('Step 1 — Resolve Venue')
 
-type EventRow = {
+type VenueRow = {
   id: string
-  event_name: string
-  artist_name: string | null
-  date: string
-  time_start: string | null
-  event_type: string
-  venues: {
-    id: string
-    name: string
-    raw_html_url: string | null
-    scraped_url: string | null
-    website_url: string | null
-  } | null
+  name: string
+  raw_html_url: string | null
+  website_url: string | null
 }
 
-let event: EventRow
+let venue: VenueRow
 
 if (isRandom) {
-  log('info', 'Query: SELECT events + venues WHERE venues.raw_html_url IS NOT NULL')
+  log('info', 'Query: SELECT venues WHERE raw_html_url IS NOT NULL')
   const { data, error } = await supabase
-    .from('events')
-    .select('id, event_name, artist_name, date, time_start, event_type, venues(id, name, raw_html_url, scraped_url, website_url)')
-    .not('venues.raw_html_url', 'is', null)
+    .from('venues')
+    .select('id, name, raw_html_url, website_url')
+    .not('raw_html_url', 'is', null)
 
   if (error) {
     log('error', `DB query failed: ${error.message}`)
     process.exit(1)
   }
 
-  const candidates = (data ?? []).filter((e) => (e.venues as { raw_html_url?: string | null } | null)?.raw_html_url)
-  log('info', `Found ${candidates.length} candidate events with a venue raw_html_url`)
+  const candidates = (data ?? []) as VenueRow[]
+  log('info', `Found ${candidates.length} candidate venues with a raw_html_url`)
 
   if (candidates.length === 0) {
-    log('error', 'No events with a venue raw_html_url found — nothing to debug')
+    log('error', 'No venues with a raw_html_url found — nothing to debug')
     process.exit(1)
   }
 
-  const pick = candidates[Math.floor(Math.random() * candidates.length)] as EventRow
-  log('ok', `Randomly selected: "${pick.event_name}" (id=${pick.id}) @ ${pick.venues?.name}`)
-  event = pick
+  venue = candidates[Math.floor(Math.random() * candidates.length)]
+  log('ok', `Randomly selected: "${venue.name}" (id=${venue.id})`)
 } else {
-  log('info', `Query: SELECT event id=${eventId} + venue`)
+  log('info', `Query: SELECT venue id=${venueId}`)
   const { data, error } = await supabase
-    .from('events')
-    .select('id, event_name, artist_name, date, time_start, event_type, venues(id, name, raw_html_url, scraped_url, website_url)')
-    .eq('id', eventId!)
+    .from('venues')
+    .select('id, name, raw_html_url, website_url')
+    .eq('id', venueId!)
     .single()
 
   if (error || !data) {
-    log('error', `Event not found (id=${eventId}): ${error?.message ?? 'no data'}`)
+    log('error', `Venue not found (id=${venueId}): ${error?.message ?? 'no data'}`)
     process.exit(1)
   }
 
-  event = data as EventRow
-  log('ok', `Found event: "${event.event_name}" (id=${event.id})`)
+  venue = data as VenueRow
+  log('ok', `Found venue: "${venue.name}" (id=${venue.id})`)
 }
 
-const venue = event.venues
-if (!venue) {
-  log('error', 'Event has no associated venue')
-  process.exit(1)
-}
-
-log('info', `Event fields:`)
-log('info', `  id          = ${event.id}`)
-log('info', `  event_name  = ${event.event_name}`)
-log('info', `  artist_name = ${event.artist_name ?? '(null)'}`)
-log('info', `  date        = ${event.date}`)
-log('info', `  time_start  = ${event.time_start ?? '(null)'}`)
-log('info', `  event_type  = ${event.event_type}`)
 log('info', `Venue fields:`)
 log('info', `  id           = ${venue.id}`)
 log('info', `  name         = ${venue.name}`)
 log('info', `  raw_html_url = ${venue.raw_html_url ?? '(null)'}`)
-log('info', `  scraped_url  = ${venue.scraped_url ?? '(null)'}`)
 log('info', `  website_url  = ${venue.website_url ?? '(null)'}`)
 
 if (!venue.raw_html_url) {
@@ -293,6 +262,5 @@ section('Summary')
 const wallMs = Date.now() - wallStart
 log('ok', `Total wall time:   ${wallMs}ms`)
 log('ok', `Events extracted:  ${extracted.length}`)
-log('ok', `Venue:             ${venue.name}`)
-log('ok', `Event:             ${event.event_name} (${event.date})`)
+log('ok', `Venue: ${venue.name} (id=${venue.id})`)
 log('ok', 'DRY RUN — no data written')

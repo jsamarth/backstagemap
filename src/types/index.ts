@@ -55,3 +55,26 @@ export interface FilterState {
   priceTypes: PriceTypeKey[];
   timeOfDay: ("afternoon" | "evening" | "late_night")[];
 }
+
+// Shape of data returned by GPT-4o before upsert into `events`
+export type ExtractedEvent = {
+  event_name:   string
+  artist_name:  string | null
+  date:         string           // YYYY-MM-DD
+  time_start:   string | null    // HH:MM 24-hour
+  time_end:     string | null    // HH:MM 24-hour
+  price_type:   PriceTypeKey
+  price_amount: number | null
+  description:  string | null
+  event_type:   EventTypeKey
+}
+
+// Row type for `scrape_logs` table (not yet in generated types)
+export type ScrapeLog = {
+  id:         string
+  venue_id:   string | null
+  workflow:   'discovery' | 'html_scrape' | 'ai_parse' | 'freshness_reset'
+  status:     'success' | 'failure'
+  error:      string | null
+  created_at: string
+}
