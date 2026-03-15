@@ -18,3 +18,4 @@ export const STORAGE_BUCKET    = process.env.SCRAPE_STORAGE_BUCKET ?? 'html-scra
 export const GOOGLE_MAPS_KEY   = process.env.GOOGLE_MAPS_API_KEY
 export const FIRECRAWL_KEY     = process.env.FIRECRAWL_API_KEY
 export const OPENAI_KEY        = process.env.OPENAI_API_KEY
+export const APIFY_KEY         = process.env.APIFY_API_KEY

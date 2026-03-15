@@ -16,6 +16,7 @@
     "scrape:parse": "bun run scripts/ai-parse.ts",
     "scrape:reset": "bun run scripts/freshness-reset.ts",
     "scrape:debug-parse": "bun run scripts/debug-parse.ts",
+    "scrape:debug-scrape": "bun run scripts/debug-scrape.ts",
     "cli": "bun run scripts/cli.ts"
   },
   "dependencies": {

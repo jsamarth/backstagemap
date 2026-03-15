@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET, FIRECRAWL_KEY } from './_env'
+import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET } from './_env'
+import { crawlToMarkdown } from '../api/_crawl'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
@@ -64,47 +65,8 @@ for (let i = 0; i < (venues ?? []).length; i++) {
   }
 
   try {
-    const crawlRes = await fetch('https://api.firecrawl.dev/v1/crawl', {
-      method:  'POST',
-      headers: {
-        Authorization:  `Bearer ${FIRECRAWL_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url:           targetUrl,
-        limit:         20,
-        scrapeOptions: { formats: ['markdown'], onlyMainContent: false },
-      }),
-    })
-
-    const crawlData = await crawlRes.json()
-    if (!crawlData.success) throw new Error(crawlData.error ?? 'Firecrawl crawl start failed')
-
-    const crawlId: string = crawlData.id
-    log('info', `  Crawl job started — id=${crawlId}`)
-
-    // Poll until complete (max 3 minutes)
-    let markdown = ''
-    const MAX_POLLS = 36
-    for (let poll = 0; poll < MAX_POLLS; poll++) {
-      await new Promise(r => setTimeout(r, 5000))
-      const statusRes = await fetch(`https://api.firecrawl.dev/v1/crawl/${crawlId}`, {
-        headers: { Authorization: `Bearer ${FIRECRAWL_KEY}` },
-      })
-      const status = await statusRes.json()
-      log('info', `  Poll ${poll + 1}/${MAX_POLLS} — status=${status.status} pages=${status.completed ?? '?'}`)
-      if (status.status === 'completed') {
-        markdown = (status.data as Array<{ markdown?: string }>)
-          .map(p => p.markdown ?? '')
-          .filter(Boolean)
-          .join('\n\n---\n\n')
-        break
-      }
-      if (status.status === 'failed') throw new Error(`Firecrawl crawl failed: ${status.error ?? 'unknown'}`)
-    }
-
-    if (!markdown) throw new Error('Firecrawl crawl timed out or returned no content')
-    log('ok', `  Firecrawl crawl complete — ${markdown.length} bytes of markdown`)
+    const { markdown, provider } = await crawlToMarkdown(targetUrl)
+    log('ok', `  Crawl complete — ${markdown.length} bytes of markdown (provider=${provider})`)
 
     const timestamp   = new Date().toISOString()
     const storagePath = `${venue.id}/${timestamp}.md`
@@ -123,6 +85,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
       last_scraped_at: timestamp,
       scrape_status:   'html_scraped' as string,
       scrape_error:    null,
+      scrape_provider: provider,
     }).eq('id', venue.id)
 
     if (updateErr) throw updateErr

@@ -9,7 +9,7 @@ import { resolve } from 'path'
 type ArgPrompt =
   | { type: 'limit' }
   | { type: 'force';  message: string }
-  | { type: 'select'; message: string; options: { value: string; label: string }[] }
+  | { type: 'select'; message: string; options: { value: string; label: string }[]; flag?: string }
   | { type: 'text';   message: string; flag: string; required?: boolean }
 
 type ScriptConfig = {
@@ -45,6 +45,21 @@ const SCRIPT_CONFIG: Record<string, ScriptConfig> = {
       ],
     }],
   },
+  'debug-scrape': {
+    hint: 'Dry-run crawl a single venue (no writes)',
+    args: [
+      { type: 'text', message: 'Venue UUID:', flag: '--venue-id', required: true },
+      {
+        type: 'select',
+        message: 'Provider:',
+        flag: '--provider',
+        options: [
+          { value: 'firecrawl', label: 'Firecrawl (default)' },
+          { value: 'apify',     label: 'Apify' },
+        ],
+      },
+    ],
+  },
 }
 
 // ── Discover scripts dynamically ─────────────────────────────────────────────
@@ -77,12 +92,16 @@ async function buildArgs(name: string): Promise<string[]> {
     } else if (prompt.type === 'select') {
       const val = await select({ message: prompt.message, options: prompt.options })
       if (isCancel(val)) { cancel('Cancelled'); process.exit(0) }
-      argv.push(val as string)
-      // If --venue_id selected, follow up with a text prompt for the UUID
-      if (val === '--venue_id') {
-        const id = await text({ message: 'Venue UUID:' })
-        if (isCancel(id) || !id) { cancel('Cancelled'); process.exit(0) }
-        argv.push(id)
+      if (prompt.flag) {
+        argv.push(prompt.flag, val as string)
+      } else {
+        argv.push(val as string)
+        // If --venue_id selected, follow up with a text prompt for the UUID
+        if (val === '--venue_id') {
+          const id = await text({ message: 'Venue UUID:' })
+          if (isCancel(id) || !id) { cancel('Cancelled'); process.exit(0) }
+          argv.push(id)
+        }
       }
 
     } else if (prompt.type === 'text') {
