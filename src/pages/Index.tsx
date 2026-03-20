@@ -7,6 +7,7 @@ import { EventLegend } from "@/components/EventLegend";
 import { LogoMark } from "@/components/LogoMark";
 import { SavedEventsPanel } from "@/components/SavedEventsPanel";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { FeedbackModal } from "@/components/FeedbackModal";
 import { useEvents } from "@/hooks/useEvents";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import type { FilterState, EventWithVenue } from "@/types";
@@ -23,6 +24,7 @@ export default function Index() {
   const [selectedVenueEvents, setSelectedVenueEvents] = useState<EventWithVenue[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleSelectVenue = (venueEvents: EventWithVenue[]) => {
     if (venueEvents.length === 1) {
@@ -60,6 +62,7 @@ export default function Index() {
         onChange={setFilters}
         onSavedClick={() => setSavedOpen(true)}
         savedCount={bookmarks.length}
+        onFeedbackClick={() => setFeedbackOpen(true)}
       />
 
       {/* Legend */}
@@ -103,6 +106,9 @@ export default function Index() {
 
       {/* Welcome modal */}
       <WelcomeModal />
+
+      {/* Feedback modal */}
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
 
       {/* Loading state */}
       {isLoading && (

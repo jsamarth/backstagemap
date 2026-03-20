@@ -1,4 +1,4 @@
-import { Calendar, Music, DollarSign, Clock, X, Bookmark } from "lucide-react";
+import { Calendar, Music, DollarSign, Clock, X, Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,9 +12,10 @@ interface FilterBarProps {
   onChange: (filters: FilterState) => void;
   onSavedClick: () => void;
   savedCount: number;
+  onFeedbackClick: () => void;
 }
 
-export function FilterBar({ filters, onChange, onSavedClick, savedCount }: FilterBarProps) {
+export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedbackClick }: FilterBarProps) {
   const today = new Date();
   const activeCount =
     (filters.date ? 1 : 0) +
@@ -131,6 +132,11 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount }: Filte
         <Bookmark className={`w-3.5 h-3.5 ${savedCount > 0 ? "fill-current" : ""}`} />
         <span className="hidden sm:inline">Saved{savedCount > 0 && ` (${savedCount})`}</span>
         {savedCount > 0 && <span className="sm:hidden">{savedCount}</span>}
+      </Button>
+
+      <Button variant="ghost" size="sm" className="rounded-full gap-1.5 text-xs font-body text-muted-foreground" onClick={onFeedbackClick}>
+        <MessageSquare className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">About</span>
       </Button>
     </div>
   );

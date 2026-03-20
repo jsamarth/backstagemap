@@ -60,6 +60,38 @@ const SCRIPT_CONFIG: Record<string, ScriptConfig> = {
       },
     ],
   },
+  'batch-pipeline': {
+    hint: 'Run full scrape pipeline for multiple venues (dry-run by default)',
+    args: [
+      { type: 'limit' },
+      {
+        type: 'select',
+        message: 'Which venues?',
+        options: [
+          { value: '',                  label: 'Not yet scraped (not_started)' },
+          { value: '--include-scraped', label: 'Include previously scraped (+ extracted)' },
+        ],
+      },
+      {
+        type: 'select',
+        message: 'Save results to Supabase?',
+        options: [
+          { value: '',       label: 'No — dry run (default)' },
+          { value: '--save', label: 'Yes — persist to DB + storage' },
+        ],
+      },
+      {
+        type: 'select',
+        message: 'Provider:',
+        flag: '--provider',
+        options: [
+          { value: 'auto',      label: 'Auto (Apify if key set, else Firecrawl)' },
+          { value: 'firecrawl', label: 'Firecrawl' },
+          { value: 'apify',     label: 'Apify' },
+        ],
+      },
+    ],
+  },
   'run-pipeline': {
     hint: 'Run full scrape pipeline locally for one venue (dry-run by default)',
     args: [
