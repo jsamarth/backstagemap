@@ -72,13 +72,13 @@ export type ExtractedEvent = {
 
 export const ExtractedEventSchema = z.object({
   event_name:   z.string().min(1).max(200),
-  artist_name:  z.string().max(200).nullable(),
+  artist_name:  z.string().max(200).nullish(),
   date:         z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time_start:   z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  time_end:     z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  time_start:   z.string().regex(/^\d{2}:\d{2}$/).nullish(),
+  time_end:     z.string().regex(/^\d{2}:\d{2}$/).nullish(),
   price_type:   z.enum(['free', 'cover', 'ticketed']),
-  price_amount: z.number().min(0).max(10000).nullable(),
-  description:  z.string().max(1000).nullable(),
+  price_amount: z.number().min(0).max(10000).nullish(),
+  description:  z.string().max(1000).nullish(),
   event_type:   z.enum(['live_band', 'dj', 'open_mic', 'jam_session']),
 })
 
