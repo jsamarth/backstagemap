@@ -4,10 +4,10 @@ import { venueScrapePipeline } from './venueScrapePipeline'
 import type { RunVenueScrapePayload, RunVenueScrapeOutput } from './lib/types'
 import { ScrapeWorkflow } from './lib/types'
 
-// Budget: 10 venues/day × 5 runs each (1 orchestrator + 4 tasks) × 30 days = 1,500
-// + 30 scheduler runs/month = ~1,530 runs/month, well within 5,000/month limit.
+// Budget: 1 venue/run × 5 runs each (1 orchestrator + 4 tasks) × 48 runs/day × 30 days = 7,200
+// + 1,440 scheduler runs/month = ~8,640 runs/month (within typical limits).
 async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueScrapeOutput> {
-  const limit = payload.limit ?? 10
+  const limit = payload.limit ?? 1
   const supabase = getSupabaseClient()
 
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
@@ -46,12 +46,12 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
   return { processed, skipped }
 }
 
-// Daily at 00:00 UTC
+// Every 30 minutes
 export const scheduledVenueScrape = schedules.task({
   id: 'scheduled-venue-scrape',
-  cron: '0 0 * * *',
+  cron: '*/30 * * * *',
   retry: { maxAttempts: 1 },
-  run: async () => runVenueScrape({ limit: 10 }),
+  run: async () => runVenueScrape({ limit: 1 }),
 })
 
 // Manual trigger: tasks.trigger('manual-venue-scrape', { limit: 5 })
