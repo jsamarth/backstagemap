@@ -76,10 +76,15 @@ export const venueScrapePipeline = task({
 
     // ── No sub-URLs: homepage events already saved, mark as extracted ────────
     if (subUrls.length === 0) {
-      console.log(`[venue-scrape-pipeline] no sub-URLs found, marking extracted`)
+      const finalStatus = analyzeResult.output.eventsFound === 0 ? 'no_events' : 'extracted'
+      if (finalStatus === 'no_events') {
+        console.log('[venue-scrape-pipeline] no events found — marking as no_events')
+      } else {
+        console.log(`[venue-scrape-pipeline] no sub-URLs found, marking extracted`)
+      }
       await supabase
         .from('venues')
-        .update({ scrape_status: 'extracted', extracted_at: new Date().toISOString() })
+        .update({ scrape_status: finalStatus, extracted_at: new Date().toISOString() })
         .eq('id', venueId)
       await supabase.from('scrape_logs').insert({
         venue_id: venueId,
@@ -87,14 +92,15 @@ export const venueScrapePipeline = task({
         status:   'success',
       })
       console.log(`[venue-scrape-pipeline] DONE eventsUpserted=${analyzeResult.output.eventsFound}`)
-      return { venueId, status: 'extracted_from_homepage', eventsFound: analyzeResult.output.eventsFound }
+      return { venueId, status: finalStatus === 'no_events' ? 'no_events' : 'extracted_from_homepage', eventsFound: analyzeResult.output.eventsFound }
     }
 
     // ── Task 3: Scrape sub-URLs ──────────────────────────────────────────────
     const subUrlScrapeResult = await scrapeSubUrls.triggerAndWait({ venueId, subUrls })
 
     if (!subUrlScrapeResult.ok) {
-      // Non-fatal: homepage events were already saved; mark extracted anyway
+      // Non-fatal: homepage events were already saved; mark extracted anyway.
+      // Do NOT mark no_events here — sub-URLs weren't checked so we haven't seen the whole site.
       const errMsg = String(subUrlScrapeResult.error)
       console.warn(`[venue-scrape-pipeline] scrapeSubUrls failed (non-fatal): ${errMsg}`)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- scrape_error not yet in generated types
@@ -132,6 +138,11 @@ export const venueScrapePipeline = task({
 
     const totalEvents = analyzeResult.output.eventsFound + analyzeSubResult.output.eventsFound
 
+    if (totalEvents === 0) {
+      console.log('[venue-scrape-pipeline] no events found — marking as no_events')
+      await supabase.from('venues').update({ scrape_status: 'no_events' }).eq('id', venueId)
+    }
+
     await supabase.from('scrape_logs').insert({
       venue_id: venueId,
       workflow: ScrapeWorkflow.VENUE_PIPELINE,
@@ -139,6 +150,6 @@ export const venueScrapePipeline = task({
     })
 
     console.log(`[venue-scrape-pipeline] DONE eventsUpserted=${totalEvents}`)
-    return { venueId, status: 'extracted', eventsFound: totalEvents }
+    return { venueId, status: totalEvents === 0 ? 'no_events' : 'extracted', eventsFound: totalEvents }
   },
 })

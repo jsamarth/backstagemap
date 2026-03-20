@@ -15,6 +15,7 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
     .from('venues')
     .select('id, website_url')
     .or(`last_scraped_at.is.null,last_scraped_at.lte.${twoDaysAgo}`)
+    .not('scrape_status', 'in', '(no_events,failed)')
     .order('last_scraped_at', { ascending: true, nullsFirst: true })
     .limit(limit)
 
