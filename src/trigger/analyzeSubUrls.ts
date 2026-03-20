@@ -6,6 +6,7 @@ import { ScrapeWorkflow } from './lib/types'
 import { extractEventsTool } from './lib/openaiTools'
 import { subUrlsSystemPrompt } from '../prompts'
 import type { ExtractedEvent } from '../types'
+import { ExtractedEventSchema } from '../types'
 
 export const analyzeSubUrls = task({
   id: 'analyze-sub-urls',
@@ -45,8 +46,15 @@ export const analyzeSubUrls = task({
 
     let events: ExtractedEvent[] = []
     try {
-      const parsed = JSON.parse(toolCall.function.arguments) as { events: ExtractedEvent[] }
-      events = parsed.events ?? []
+      const parsed = JSON.parse(toolCall.function.arguments) as { events: unknown[] }
+      const raw = parsed.events ?? []
+      events = raw.filter((e): e is ExtractedEvent => {
+        const result = ExtractedEventSchema.safeParse(e)
+        if (!result.success) {
+          console.warn('[analyze-sub-urls] dropping invalid event:', JSON.stringify(e), result.error.flatten())
+        }
+        return result.success
+      })
     } catch {
       console.error('[analyze-sub-urls] failed to parse tool call arguments:', toolCall.function.arguments)
     }

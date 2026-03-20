@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { z } from 'zod'
 
 export type Venue = Tables<"venues">;
 export type Event = Tables<"events">;
@@ -68,6 +69,18 @@ export type ExtractedEvent = {
   description:  string | null
   event_type:   EventTypeKey
 }
+
+export const ExtractedEventSchema = z.object({
+  event_name:   z.string().min(1).max(200),
+  artist_name:  z.string().max(200).nullable(),
+  date:         z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time_start:   z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  time_end:     z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  price_type:   z.enum(['free', 'cover', 'ticketed']),
+  price_amount: z.number().min(0).max(10000).nullable(),
+  description:  z.string().max(1000).nullable(),
+  event_type:   z.enum(['live_band', 'dj', 'open_mic', 'jam_session']),
+})
 
 // Row type for `scrape_logs` table (not yet in generated types)
 export type ScrapeLog = {

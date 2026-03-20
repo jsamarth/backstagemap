@@ -7,6 +7,7 @@ import { extractEventsTool, identifyCalendarUrlsTool } from './lib/openaiTools'
 import { resolveSubUrls } from './lib/urlUtils'
 import { homepageSystemPrompt } from '../prompts'
 import type { ExtractedEvent } from '../types'
+import { ExtractedEventSchema } from '../types'
 
 export const analyzeHomepage = task({
   id: 'analyze-homepage',
@@ -47,8 +48,15 @@ export const analyzeHomepage = task({
     for (const toolCall of completion.choices[0]?.message?.tool_calls ?? []) {
       if (toolCall.function.name === 'extract_events') {
         try {
-          const parsed = JSON.parse(toolCall.function.arguments) as { events: ExtractedEvent[] }
-          events = parsed.events ?? []
+          const parsed = JSON.parse(toolCall.function.arguments) as { events: unknown[] }
+          const raw = parsed.events ?? []
+          events = raw.filter((e): e is ExtractedEvent => {
+            const result = ExtractedEventSchema.safeParse(e)
+            if (!result.success) {
+              console.warn('[analyze-homepage] dropping invalid event:', JSON.stringify(e), result.error.flatten())
+            }
+            return result.success
+          })
         } catch {
           console.error('[analyze-homepage] failed to parse extract_events arguments:', toolCall.function.arguments)
           events = []
