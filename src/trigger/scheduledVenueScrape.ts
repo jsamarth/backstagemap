@@ -16,6 +16,8 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
     .select('id, website_url')
     .or(`last_scraped_at.is.null,last_scraped_at.lte.${twoDaysAgo}`)
     .not('scrape_status', 'in', '(no_events,failed)')
+    .not('website_url', 'is', null)
+    .not('website_url', 'ilike', '%facebook.com%')
     .order('last_scraped_at', { ascending: true, nullsFirst: true })
     .limit(limit)
 
@@ -24,20 +26,8 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
   let skipped = 0
 
   for (const venue of venueList) {
-    if (!venue.website_url) {
-      console.warn(`[scheduled-venue-scrape] venueId=${venue.id} has no website_url — skipping`)
-      await supabase.from('scrape_logs').insert({
-        venue_id: venue.id,
-        workflow: ScrapeWorkflow.SCHEDULED_SCRAPE,
-        status:   'failure',
-        error:    'No website_url',
-      })
-      skipped++
-      continue
-    }
-
     // Fire-and-forget: pipelines run in parallel, scheduler does not wait for results
-    await venueScrapePipeline.trigger({ venueId: venue.id, websiteUrl: venue.website_url })
+    await venueScrapePipeline.trigger({ venueId: venue.id, websiteUrl: venue.website_url! })
     console.log(`[scheduled-venue-scrape] triggered pipeline for venueId=${venue.id}`)
     processed++
   }
