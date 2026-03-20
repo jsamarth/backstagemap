@@ -136,7 +136,7 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedb
 
       <Button variant="ghost" size="sm" className="rounded-full gap-1.5 text-xs font-body text-muted-foreground" onClick={onFeedbackClick}>
         <MessageSquare className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">About</span>
+        <span className="hidden sm:inline">Feedback</span>
       </Button>
     </div>
   );
