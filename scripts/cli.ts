@@ -60,6 +60,44 @@ const SCRIPT_CONFIG: Record<string, ScriptConfig> = {
       },
     ],
   },
+  'run-pipeline': {
+    hint: 'Run full scrape pipeline locally for one venue (dry-run by default)',
+    args: [
+      { type: 'text', message: 'Venue UUID:', flag: '--venue-id', required: true },
+      {
+        type: 'select',
+        message: 'Save results to Supabase?',
+        options: [
+          { value: '',       label: 'No — dry run (default)' },
+          { value: '--save', label: 'Yes — persist to DB + storage' },
+        ],
+      },
+      {
+        type: 'select',
+        message: 'Provider:',
+        flag: '--provider',
+        options: [
+          { value: 'auto',      label: 'Auto (Apify if key set, else Firecrawl)' },
+          { value: 'firecrawl', label: 'Firecrawl' },
+          { value: 'apify',     label: 'Apify' },
+        ],
+      },
+    ],
+  },
+  'view-scrapes': {
+    hint: 'List (and optionally print) scraped pages for a venue',
+    args: [
+      { type: 'text', message: 'Venue UUID:', flag: '--venue-id', required: true },
+      {
+        type: 'select',
+        message: 'Show markdown content?',
+        options: [
+          { value: '',       label: 'No — just list files' },
+          { value: '--show', label: 'Yes — print content' },
+        ],
+      },
+    ],
+  },
 }
 
 // ── Discover scripts dynamically ─────────────────────────────────────────────

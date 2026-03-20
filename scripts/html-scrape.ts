@@ -1,21 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET } from './_env'
-import { crawlToMarkdown } from '../api/_crawl'
+import { crawlToMarkdown } from '../src/lib/crawl'
+import { SCRAPE_FAIL_THRESHOLD, ScrapeWorkflow } from '../src/trigger/lib/types'
+import { getArg, log } from './_utils'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-function getArg(flag: string): string | undefined {
-  const i = process.argv.indexOf(flag)
-  return i !== -1 ? process.argv[i + 1] : undefined
-}
-
-function log(level: 'info' | 'ok' | 'warn' | 'error', msg: string) {
-  const ts = new Date().toISOString()
-  const prefix = { info: '·', ok: '✓', warn: '⚠', error: '✗' }[level]
-  console.log(`[${ts}] ${prefix} ${msg}`)
-}
-
-const FAIL_THRESHOLD = 5
 const DEFAULT_BATCH_SIZE = 30
 
 const limitArg = getArg('--limit')
@@ -57,7 +47,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
     failed++
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
-      workflow: 'html_scrape',
+      workflow: ScrapeWorkflow.HTML_SCRAPE,
       status:   'failure',
       error:    'No website_url',
     })
@@ -69,7 +59,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
     log('ok', `  Crawl complete — ${markdown.length} bytes of markdown (provider=${provider})`)
 
     const timestamp   = new Date().toISOString()
-    const storagePath = `${venue.id}/${timestamp}.md`
+    const storagePath = `${venue.id}/homepage/${timestamp}.md`
 
     log('info', `  Uploading to storage: ${storagePath}`)
 
@@ -92,7 +82,7 @@ for (let i = 0; i < (venues ?? []).length; i++) {
 
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
-      workflow: 'html_scrape',
+      workflow: ScrapeWorkflow.HTML_SCRAPE,
       status:   'success',
     })
 
@@ -100,21 +90,21 @@ for (let i = 0; i < (venues ?? []).length; i++) {
   } catch (err: unknown) {
     const newFailCount = (venue.scrape_fail_count ?? 0) + 1
     log('error', `  Scrape failed: ${(err as Error).message}`)
-    log('info', `  scrape_fail_count now ${newFailCount} (threshold ${FAIL_THRESHOLD})`)
+    log('info', `  scrape_fail_count now ${newFailCount} (threshold ${SCRAPE_FAIL_THRESHOLD})`)
 
     const update: Record<string, unknown> = {
       scrape_error:      (err as Error).message,
       scrape_fail_count: newFailCount,
     }
-    if (newFailCount >= FAIL_THRESHOLD) {
+    if (newFailCount >= SCRAPE_FAIL_THRESHOLD) {
       update.scrape_status = 'failed'
-      log('warn', `  Marking as failed (${FAIL_THRESHOLD}+ consecutive failures)`)
+      log('warn', `  Marking as failed (${SCRAPE_FAIL_THRESHOLD}+ consecutive failures)`)
     }
 
     await supabase.from('venues').update(update).eq('id', venue.id)
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
-      workflow: 'html_scrape',
+      workflow: ScrapeWorkflow.HTML_SCRAPE,
       status:   'failure',
       error:    (err as Error).message,
     })

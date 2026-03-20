@@ -1,18 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_URL, SUPABASE_KEY } from './_env'
+import { getArg, log } from './_utils'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-function getArg(flag: string): string | undefined {
-  const i = process.argv.indexOf(flag)
-  return i !== -1 ? process.argv[i + 1] : undefined
-}
-
-function log(level: 'info' | 'ok' | 'warn' | 'error', msg: string) {
-  const ts = new Date().toISOString()
-  const prefix = { info: '·', ok: '✓', warn: '⚠', error: '✗' }[level]
-  console.log(`[${ts}] ${prefix} ${msg}`)
-}
 
 const DEFAULT_RESET_BATCH_SIZE = 50
 

@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { crawlToMarkdown } from '../_crawl'
+import { crawlToMarkdown } from '../../src/lib/crawl'
+import { SCRAPE_FAIL_THRESHOLD, ScrapeWorkflow } from '../../src/trigger/lib/types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const FAIL_THRESHOLD = 5
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL is not set')
+if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
+const supabase = createClient(url, key)
 const BATCH_SIZE = 30
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       failed++
       await supabase.from('scrape_logs').insert({
         venue_id: venue.id,
-        workflow: 'html_scrape',
+        workflow: ScrapeWorkflow.HTML_SCRAPE,
         status:   'failure',
         error:    'No website_url',
       })
@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { markdown, provider } = await crawlToMarkdown(targetUrl)
 
       const timestamp   = new Date().toISOString()
-      const storagePath = `${venue.id}/${timestamp}.md`
+      const storagePath = `${venue.id}/homepage/${timestamp}.md`
 
       const { error: uploadErr } = await supabase.storage
         .from(process.env.SCRAPE_STORAGE_BUCKET ?? 'html-scrapes')
@@ -58,6 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await supabase.from('venues').update({
         raw_html_url:    storagePath,
+        scraped_url:     targetUrl,
         last_scraped_at: timestamp,
         scrape_status:   'html_scraped' as string,
         scrape_error:    null,
@@ -66,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await supabase.from('scrape_logs').insert({
         venue_id: venue.id,
-        workflow: 'html_scrape',
+        workflow: ScrapeWorkflow.HTML_SCRAPE,
         status:   'success',
       })
 
@@ -77,14 +78,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         scrape_error:      (err as Error).message,
         scrape_fail_count: newFailCount,
       }
-      if (newFailCount >= FAIL_THRESHOLD) {
+      if (newFailCount >= SCRAPE_FAIL_THRESHOLD) {
         update.scrape_status = 'failed'
       }
 
       await supabase.from('venues').update(update).eq('id', venue.id)
       await supabase.from('scrape_logs').insert({
         venue_id: venue.id,
-        workflow: 'html_scrape',
+        workflow: ScrapeWorkflow.HTML_SCRAPE,
         status:   'failure',
         error:    (err as Error).message,
       })

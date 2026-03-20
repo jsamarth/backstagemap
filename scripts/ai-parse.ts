@@ -3,52 +3,12 @@ import OpenAI from 'openai'
 import { resolve } from 'path'
 import { SUPABASE_URL, SUPABASE_KEY, STORAGE_BUCKET, OPENAI_KEY } from './_env'
 import type { ExtractedEvent } from '../src/types'
+import { extractEventsTool } from '../src/trigger/lib/openaiTools'
+import { ScrapeWorkflow } from '../src/trigger/lib/types'
+import { getArg, log } from './_utils'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 const openai = new OpenAI({ apiKey: OPENAI_KEY })
-
-function getArg(flag: string): string | undefined {
-  const i = process.argv.indexOf(flag)
-  return i !== -1 ? process.argv[i + 1] : undefined
-}
-
-function log(level: 'info' | 'ok' | 'warn' | 'error', msg: string) {
-  const ts = new Date().toISOString()
-  const prefix = { info: '·', ok: '✓', warn: '⚠', error: '✗' }[level]
-  console.log(`[${ts}] ${prefix} ${msg}`)
-}
-
-const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
-  type: 'function',
-  function: {
-    name: 'extract_events',
-    description: 'Extract all upcoming music events from the venue calendar page',
-    parameters: {
-      type: 'object',
-      required: ['events'],
-      properties: {
-        events: {
-          type: 'array',
-          items: {
-            type: 'object',
-            required: ['event_name', 'date', 'event_type', 'price_type'],
-            properties: {
-              event_name:   { type: 'string' },
-              artist_name:  { type: ['string', 'null'] },
-              date:         { type: 'string', description: 'YYYY-MM-DD' },
-              time_start:   { type: ['string', 'null'], description: 'HH:MM 24-hour format' },
-              time_end:     { type: ['string', 'null'], description: 'HH:MM 24-hour format' },
-              price_type:   { type: 'string', enum: ['free', 'cover', 'ticketed'] },
-              price_amount: { type: ['number', 'null'] },
-              description:  { type: ['string', 'null'] },
-              event_type:   { type: 'string', enum: ['live_band', 'dj', 'open_mic', 'jam_session'] },
-            },
-          },
-        },
-      },
-    },
-  },
-}
 
 const PROMPTS_DIR = resolve(import.meta.dir, '..', 'prompts')
 const today = new Date().toISOString().split('T')[0]
@@ -154,7 +114,7 @@ for (let i = 0; i < venues.length; i++) {
 
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
-      workflow: 'ai_parse',
+      workflow: ScrapeWorkflow.AI_PARSE,
       status:   'success',
     })
 
@@ -163,7 +123,7 @@ for (let i = 0; i < venues.length; i++) {
     log('error', `  Parse failed: ${(err as Error).message}`)
     await supabase.from('scrape_logs').insert({
       venue_id: venue.id,
-      workflow: 'ai_parse',
+      workflow: ScrapeWorkflow.AI_PARSE,
       status:   'failure',
       error:    (err as Error).message,
     })

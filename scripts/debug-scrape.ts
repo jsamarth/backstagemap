@@ -1,11 +1,7 @@
 import { SUPABASE_URL, SUPABASE_KEY } from './_env'
-import { crawlToMarkdown } from '../api/_crawl'
+import { crawlToMarkdown } from '../src/lib/crawl'
 import { createClient } from '@supabase/supabase-js'
-
-function getArg(flag: string): string | undefined {
-  const i = process.argv.indexOf(flag)
-  return i !== -1 ? process.argv[i + 1] : undefined
-}
+import { getArg } from './_utils'
 
 const venueId  = getArg('--venue-id')
 const providerArg = getArg('--provider') as 'apify' | 'firecrawl' | undefined
