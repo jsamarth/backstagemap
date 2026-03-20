@@ -5,11 +5,10 @@
  * Venues are selected balanced across neighborhoods and shuffled.
  *
  * Usage:
- *   bun run scripts/batch-pipeline.ts [--limit <n>] [--include-scraped] [--save] [--provider apify|firecrawl]
+ *   bun run scripts/batch-pipeline.ts [--limit <n>] [--save] [--provider apify|firecrawl]
  *
  * Options:
  *   --limit <n>         Number of venues to process (default: 5)
- *   --include-scraped   Include venues already extracted (default: only not_started)
  *   --save              Persist results to Supabase + storage (default: dry run)
  *   --provider <p>      Force crawl provider: apify | firecrawl (default: auto)
  */
@@ -21,11 +20,10 @@ import { getArg, hasFlag, log, section } from './_utils'
 
 // ── Args ──────────────────────────────────────────────────────────────────────
 
-const limitArg      = getArg('--limit')
-const LIMIT         = limitArg ? parseInt(limitArg, 10) : 5
-const INCLUDE_SCRAPED = hasFlag('--include-scraped')
-const SAVE          = hasFlag('--save')
-const providerArg   = getArg('--provider')
+const limitArg  = getArg('--limit')
+const LIMIT     = limitArg ? parseInt(limitArg, 10) : 5
+const SAVE      = hasFlag('--save')
+const providerArg = getArg('--provider')
 
 // ── Neighborhood-balanced venue fetch ─────────────────────────────────────────
 
@@ -45,10 +43,10 @@ function shuffle<T>(arr: T[]): T[] {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-log('info', `batch-pipeline — limit=${LIMIT} include-scraped=${INCLUDE_SCRAPED} save=${SAVE} provider=${providerArg ?? 'auto'}`)
+log('info', `batch-pipeline — limit=${LIMIT} save=${SAVE} provider=${providerArg ?? 'auto'}`)
 if (!SAVE) log('warn', 'DRY RUN — pass --save to persist results to Supabase')
 
-const statuses = INCLUDE_SCRAPED ? ['not_started', 'extracted'] : ['not_started']
+const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
 const perNeighborhood = Math.ceil(LIMIT / NEIGHBORHOODS.length)
 
 const batches = await Promise.all(
@@ -56,7 +54,7 @@ const batches = await Promise.all(
     const { data } = await supabase
       .from('venues')
       .select('id, name, website_url')
-      .in('scrape_status', statuses)
+      .or(`last_scraped_at.is.null,last_scraped_at.lte.${twoDaysAgo}`)
       .eq('neighborhood', neighborhood)
       .order('last_scraped_at', { ascending: true, nullsFirst: true })
       .limit(perNeighborhood)
@@ -67,7 +65,7 @@ const batches = await Promise.all(
 const venues = shuffle(batches.flat()).slice(0, LIMIT)
 
 if (venues.length === 0) {
-  log('warn', `No venues found with scrape_status in [${statuses.join(', ')}]`)
+  log('warn', 'No venues found that are due for scraping (not scraped in last 2 days)')
   process.exit(0)
 }
 

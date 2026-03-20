@@ -23,7 +23,7 @@ export const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
               price_type:   { type: 'string', enum: ['free', 'cover', 'ticketed'] },
               price_amount: { type: ['number', 'null'] },
               description:  { type: ['string', 'null'] },
-              event_type:   { type: 'string', enum: ['live_band', 'dj', 'open_mic', 'jam_session'] },
+              event_type:   { type: 'string', enum: ['live_band', 'dj', 'open_mic', 'jam_session'], description: "IMPORTANT: If the event name or description contains 'jam', 'open jam', or 'live jam', use 'jam_session' — never 'live_band'. Use 'live_band' only for ticketed/scheduled band performances." },
             },
           },
         },

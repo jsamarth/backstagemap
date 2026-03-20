@@ -10,10 +10,11 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
   const limit = payload.limit ?? 10
   const supabase = getSupabaseClient()
 
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
   const { data: venues } = await supabase
     .from('venues')
     .select('id, website_url')
-    .eq('scrape_status', 'not_started')
+    .or(`last_scraped_at.is.null,last_scraped_at.lte.${twoDaysAgo}`)
     .order('last_scraped_at', { ascending: true, nullsFirst: true })
     .limit(limit)
 

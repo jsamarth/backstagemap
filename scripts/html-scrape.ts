@@ -22,15 +22,16 @@ const { count: pruneCount } = await supabase
 
 log('info', `Pruned ${pruneCount ?? 0} past events (before ${pruneDate})`)
 
+const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
 const { data: venues } = await supabase
   .from('venues')
   .select('id, name, website_url, scrape_fail_count')
-  .eq('scrape_status', 'not_started')
+  .or(`last_scraped_at.is.null,last_scraped_at.lte.${twoDaysAgo}`)
   .order('last_scraped_at', { ascending: true, nullsFirst: true })
   .limit(BATCH_SIZE)
 
 const total = (venues ?? []).length
-log('info', `Found ${total} venues with scrape_status=not_started`)
+log('info', `Found ${total} venues not scraped in the last 2 days`)
 
 let scraped = 0
 let failed = 0
