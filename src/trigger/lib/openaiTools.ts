@@ -4,7 +4,7 @@ export const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
   type: 'function',
   function: {
     name: 'extract_events',
-    description: 'Extract all upcoming music events from the venue calendar page',
+    description: 'Extract all upcoming music events from the venue calendar page. ONLY include events that are specific: they must have a concrete date and a specific name, artist, or act. Do NOT include generic or recurring descriptions such as "live music every night", "DJ every Friday", or "jazz on weekends" — these are not events.',
     parameters: {
       type: 'object',
       required: ['events'],
