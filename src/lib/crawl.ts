@@ -5,7 +5,7 @@ const APIFY_ACTOR   = 'apify~website-content-crawler'
 const POLL_INTERVAL = 5_000
 const MAX_POLLS     = 36  // 3 min max
 
-class ApifyCreditError extends Error {}
+class ApifyUnavailableError extends Error {}
 
 async function tryApify(url: string, singlePage = false): Promise<string> {
   const startRes = await fetch(
@@ -22,11 +22,15 @@ async function tryApify(url: string, singlePage = false): Promise<string> {
     }
   )
 
-  if (startRes.status === 402) throw new ApifyCreditError('Apify: insufficient credits (HTTP 402)')
+  if (startRes.status === 402) throw new ApifyUnavailableError('Apify: insufficient credits (HTTP 402)')
+  if (startRes.status === 403) throw new ApifyUnavailableError('Apify: platform feature disabled (HTTP 403)')
 
   const startData = await startRes.json()
   if (startData?.error?.type === 'insufficient-funds') {
-    throw new ApifyCreditError(`Apify: insufficient credits — ${startData.error.message}`)
+    throw new ApifyUnavailableError(`Apify: insufficient credits — ${startData.error.message}`)
+  }
+  if (startData?.error?.type === 'platform-feature-disabled') {
+    throw new ApifyUnavailableError(`Apify: platform feature disabled — ${startData.error.message}`)
   }
   if (!startRes.ok) throw new Error(`Apify run start failed (${startRes.status}): ${JSON.stringify(startData)}`)
 
@@ -109,8 +113,8 @@ export async function crawlToMarkdown(
       const markdown = await tryApify(url, singlePage)
       return { markdown, provider: 'apify' }
     } catch (err) {
-      if (err instanceof ApifyCreditError) {
-        console.warn(`[crawl] Apify credit limit reached — falling back to Firecrawl. ${(err as Error).message}`)
+      if (err instanceof ApifyUnavailableError) {
+        console.warn(`[crawl] Apify unavailable — falling back to Firecrawl. ${(err as Error).message}`)
         if (forceProvider === 'apify') throw err
       } else {
         throw err  // non-credit errors fail the venue scrape
