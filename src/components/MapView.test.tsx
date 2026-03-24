@@ -1,22 +1,24 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { forwardRef } from "react";
 import { MapView } from "./MapView";
 
 // Mock react-map-gl/maplibre — MapLibre requires WebGL which doesn't exist in jsdom
 const mockFlyTo = vi.fn();
 vi.mock("react-map-gl/maplibre", () => ({
-  default: vi.fn(({ children, ref }: any) => {
-    // Expose a fake map ref so flyTo can be tested
-    if (ref) {
-      ref.current = { flyTo: mockFlyTo };
+  default: forwardRef(({ children }: { children: React.ReactNode }, ref: React.Ref<unknown>) => {
+    if (ref && typeof ref === "object") {
+      (ref as React.MutableRefObject<unknown>).current = { flyTo: mockFlyTo };
     }
     return <div data-testid="map">{children}</div>;
   }),
-  Marker: ({ children }: any) => <div data-testid="marker">{children}</div>,
+  Marker: ({ children }: { children: React.ReactNode }) => <div data-testid="marker">{children}</div>,
   NavigationControl: () => <div data-testid="nav-control" />,
 }));
 
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
+
+vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 
 // Minimal event fixture
 const makeEvent = (overrides = {}) => ({
@@ -83,5 +85,36 @@ describe("MapView — user location", () => {
     // venue marker exists, but no user-location marker
     // Note: Marker mock renders {children}, so data-testid="user-location-marker" on a child div will propagate
     expect(screen.queryByTestId("user-location-marker")).not.toBeInTheDocument();
+  });
+
+  it("calls flyTo when button is clicked and location is already known", async () => {
+    // Simulate permission already granted + position received on mount
+    (navigator.permissions.query as ReturnType<typeof vi.fn>).mockResolvedValue({ state: "granted" });
+    const mockPosition = { coords: { latitude: 40.7128, longitude: -73.97 } } as GeolocationPosition;
+    (navigator.geolocation.getCurrentPosition as ReturnType<typeof vi.fn>).mockImplementation(
+      (success: PositionCallback) => success(mockPosition),
+    );
+
+    render(<MapView events={[]} selectedVenueId={null} onSelectVenue={vi.fn()} />);
+    await act(async () => {});
+
+    // Now userLocation should be set — clicking should flyTo
+    fireEvent.click(screen.getByRole("button", { name: /center on my location/i }));
+    expect(mockFlyTo).toHaveBeenCalledWith({
+      center: [-73.97, 40.7128],
+      zoom: 14,
+    });
+  });
+
+  it("shows toast when getCurrentPosition fails on button click", async () => {
+    (navigator.geolocation.getCurrentPosition as ReturnType<typeof vi.fn>).mockImplementation(
+      (_success: PositionCallback, error: PositionErrorCallback) =>
+        error({ code: 1, message: "denied" } as GeolocationPositionError),
+    );
+
+    render(<MapView events={[]} selectedVenueId={null} onSelectVenue={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /center on my location/i }));
+
+    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
   });
 });
