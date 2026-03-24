@@ -3,7 +3,7 @@ import type { EventTypeKey } from "@/types";
 
 export function EventLegend() {
   return (
-    <div className="absolute bottom-6 left-4 z-10 flex items-center gap-3 bg-card/80 backdrop-blur-md rounded-full px-4 py-2 border border-border">
+    <div className="absolute left-4 z-10 flex items-center gap-3 bg-card/80 backdrop-blur-md rounded-full px-4 py-2 border border-border" style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
       {(Object.entries(EVENT_TYPE_LABELS) as [EventTypeKey, string][]).map(([key, label]) => (
         <div key={key} className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full ${EVENT_TYPE_COLORS[key]}`} />

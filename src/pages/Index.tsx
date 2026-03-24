@@ -45,7 +45,7 @@ export default function Index() {
   const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks();
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
+    <div className="h-[100dvh] w-screen overflow-hidden relative">
       {/* Map fills entire viewport */}
       <MapView
         events={events}
