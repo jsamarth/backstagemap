@@ -3,6 +3,9 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { forwardRef } from "react";
 import { MapView } from "./MapView";
 
+const mockToast = vi.fn();
+vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mockToast }) }));
+
 // Mock react-map-gl/maplibre — MapLibre requires WebGL which doesn't exist in jsdom
 const mockFlyTo = vi.fn();
 vi.mock("react-map-gl/maplibre", () => ({
@@ -17,8 +20,6 @@ vi.mock("react-map-gl/maplibre", () => ({
 }));
 
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
-
-vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 
 // Minimal event fixture
 const makeEvent = (overrides = {}) => ({
@@ -35,6 +36,7 @@ const makeEvent = (overrides = {}) => ({
 describe("MapView — user location", () => {
   beforeEach(() => {
     mockFlyTo.mockClear();
+    mockToast.mockClear();
     // Default: geolocation exists but permission is "prompt"
     Object.defineProperty(navigator, "geolocation", {
       writable: true,
@@ -115,6 +117,8 @@ describe("MapView — user location", () => {
     render(<MapView events={[]} selectedVenueId={null} onSelectVenue={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /center on my location/i }));
 
-    expect(navigator.geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: "destructive" }),
+    );
   });
 });
