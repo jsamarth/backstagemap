@@ -103,6 +103,10 @@ export default {
           "0%, 100%": { transform: "scale(1)", opacity: "1" },
           "50%": { transform: "scale(1.3)", opacity: "0.7" },
         },
+        "pulse-ring": {
+          "0%": { transform: "scale(0.8)", opacity: "1" },
+          "100%": { transform: "scale(2.2)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +116,7 @@ export default {
         "slide-in-bottom": "slide-in-bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
         "fade-in": "fade-in 0.2s ease-out",
         "pulse-pin": "pulse-pin 2s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 1.5s ease-out infinite",
       },
     },
   },
