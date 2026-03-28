@@ -37,5 +37,8 @@ supabase/.temp/
 # Superpowers
 .superpowers/
 
+# Git worktrees
+.worktrees/
+
 # Doc files
 docs/
