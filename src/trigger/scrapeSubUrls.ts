@@ -1,8 +1,8 @@
 import { task } from '@trigger.dev/sdk'
-import { crawlToMarkdown } from '../lib/crawl'
-import { getSupabaseClient, STORAGE_BUCKET } from './lib/supabase'
-import type { ScrapeSubUrlsPayload, ScrapeSubUrlsOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
+import { crawlToMarkdown } from '@/lib/crawl'
+import { getSupabaseClient, STORAGE_BUCKET } from '@/trigger/lib/supabase'
+import type { ScrapeSubUrlsPayload, ScrapeSubUrlsOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
 
 export const scrapeSubUrls = task({
   id: 'scrape-sub-urls',

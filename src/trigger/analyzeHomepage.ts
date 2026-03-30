@@ -1,13 +1,13 @@
 import { task } from '@trigger.dev/sdk'
-import { getSupabaseClient, STORAGE_BUCKET } from './lib/supabase'
-import { getOpenAIClient } from './lib/openai'
-import type { AnalyzeHomepagePayload, AnalyzeHomepageOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
-import { extractEventsTool, identifyCalendarUrlsTool } from './lib/openaiTools'
-import { resolveSubUrls } from './lib/urlUtils'
-import { homepageSystemPrompt } from '../prompts'
-import type { ExtractedEvent } from '../types'
-import { ExtractedEventSchema } from '../types'
+import { getSupabaseClient, STORAGE_BUCKET } from '@/trigger/lib/supabase'
+import { getOpenAIClient } from '@/trigger/lib/openai'
+import type { AnalyzeHomepagePayload, AnalyzeHomepageOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
+import { extractEventsTool, identifyCalendarUrlsTool } from '@/trigger/lib/openaiTools'
+import { resolveSubUrls } from '@/trigger/lib/urlUtils'
+import { homepageSystemPrompt } from '@/prompts'
+import type { ExtractedEvent } from '@/types'
+import { ExtractedEventSchema } from '@/types'
 
 export const analyzeHomepage = task({
   id: 'analyze-homepage',

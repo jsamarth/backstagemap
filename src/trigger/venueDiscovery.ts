@@ -1,7 +1,7 @@
 import { task, schedules } from '@trigger.dev/sdk'
 import { createClient } from '@supabase/supabase-js'
-import type { DiscoveryPayload, DiscoveryOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
+import type { DiscoveryPayload, DiscoveryOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
 
 const NEIGHBORHOODS = [
   { label: 'Williamsburg', value: 'williamsburg' },

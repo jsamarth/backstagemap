@@ -1,8 +1,8 @@
 import { task } from '@trigger.dev/sdk'
-import { crawlToMarkdown } from '../lib/crawl'
-import { getSupabaseClient, STORAGE_BUCKET } from './lib/supabase'
-import type { ScrapeHomepagePayload, ScrapeHomepageOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
+import { crawlToMarkdown } from '@/lib/crawl'
+import { getSupabaseClient, STORAGE_BUCKET } from '@/trigger/lib/supabase'
+import type { ScrapeHomepagePayload, ScrapeHomepageOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
 
 export const scrapeHomepage = task({
   id: 'scrape-homepage',

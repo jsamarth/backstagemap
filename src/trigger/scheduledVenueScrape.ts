@@ -1,8 +1,8 @@
 import { task, schedules } from '@trigger.dev/sdk'
-import { getSupabaseClient } from './lib/supabase'
-import { venueScrapePipeline } from './venueScrapePipeline'
-import type { RunVenueScrapePayload, RunVenueScrapeOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
+import { getSupabaseClient } from '@/trigger/lib/supabase'
+import { venueScrapePipeline } from '@/trigger/venueScrapePipeline'
+import type { RunVenueScrapePayload, RunVenueScrapeOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
 
 // Budget: 1 venue/run × 5 runs each (1 orchestrator + 4 tasks) × 48 runs/day × 30 days = 7,200
 // + 1,440 scheduler runs/month = ~8,640 runs/month (within typical limits).
@@ -23,7 +23,7 @@ async function runVenueScrape(payload: RunVenueScrapePayload): Promise<RunVenueS
 
   const venueList = venues ?? []
   let processed = 0
-  let skipped = 0
+  const skipped = 0
 
   for (const venue of venueList) {
     // Fire-and-forget: pipelines run in parallel, scheduler does not wait for results

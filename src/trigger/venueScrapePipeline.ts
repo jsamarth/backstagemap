@@ -1,11 +1,11 @@
 import { task } from '@trigger.dev/sdk'
-import { getSupabaseClient } from './lib/supabase'
-import { scrapeHomepage } from './scrapeHomepage'
-import { analyzeHomepage } from './analyzeHomepage'
-import { scrapeSubUrls } from './scrapeSubUrls'
-import { analyzeSubUrls } from './analyzeSubUrls'
-import type { VenueScrapePipelinePayload } from './lib/types'
-import { SCRAPE_FAIL_THRESHOLD, ScrapeWorkflow } from './lib/types'
+import { getSupabaseClient } from '@/trigger/lib/supabase'
+import { scrapeHomepage } from '@/trigger/scrapeHomepage'
+import { analyzeHomepage } from '@/trigger/analyzeHomepage'
+import { scrapeSubUrls } from '@/trigger/scrapeSubUrls'
+import { analyzeSubUrls } from '@/trigger/analyzeSubUrls'
+import type { VenueScrapePipelinePayload } from '@/trigger/lib/types'
+import { SCRAPE_FAIL_THRESHOLD, ScrapeWorkflow } from '@/trigger/lib/types'
 
 export const venueScrapePipeline = task({
   id: 'venue-scrape-pipeline',

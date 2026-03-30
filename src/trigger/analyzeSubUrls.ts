@@ -1,12 +1,12 @@
 import { task } from '@trigger.dev/sdk'
-import { getSupabaseClient, STORAGE_BUCKET } from './lib/supabase'
-import { getOpenAIClient } from './lib/openai'
-import type { AnalyzeSubUrlsPayload, AnalyzeSubUrlsOutput } from './lib/types'
-import { ScrapeWorkflow } from './lib/types'
-import { extractEventsTool } from './lib/openaiTools'
-import { subUrlsSystemPrompt } from '../prompts'
-import type { ExtractedEvent } from '../types'
-import { ExtractedEventSchema } from '../types'
+import { getSupabaseClient, STORAGE_BUCKET } from '@/trigger/lib/supabase'
+import { getOpenAIClient } from '@/trigger/lib/openai'
+import type { AnalyzeSubUrlsPayload, AnalyzeSubUrlsOutput } from '@/trigger/lib/types'
+import { ScrapeWorkflow } from '@/trigger/lib/types'
+import { extractEventsTool } from '@/trigger/lib/openaiTools'
+import { subUrlsSystemPrompt } from '@/prompts'
+import type { ExtractedEvent } from '@/types'
+import { ExtractedEventSchema } from '@/types'
 
 export const analyzeSubUrls = task({
   id: 'analyze-sub-urls',

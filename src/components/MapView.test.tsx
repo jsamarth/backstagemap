@@ -1,7 +1,7 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { forwardRef } from "react";
-import { MapView } from "./MapView";
+import { MapView } from "@/components/MapView";
 
 const mockToast = vi.fn();
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mockToast }) }));
