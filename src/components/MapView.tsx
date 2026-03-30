@@ -117,7 +117,7 @@ export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps
       style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
       mapStyle={MAP_STYLE}
       attributionControl={false}
-      minZoom={NYC_CENTER.zoom}
+      minZoom={9}
     >
       {Array.from(venueGroups.entries()).map(([venueId, venueEvents]) => {
         const first = venueEvents[0];
