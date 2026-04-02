@@ -62,7 +62,7 @@ Added to the action row next to Save and Source buttons.
 **Behavior:**
 1. If `navigator.share` is available (mobile) → call `navigator.share({ url: window.location.href })`.
 2. Otherwise → `navigator.clipboard.writeText(window.location.href)`.
-3. On success → button label changes to "Copied!" for 1.5 seconds, then resets to "Share".
+3. On clipboard copy success → button label changes to "Copied!" for 1.5 seconds, then resets to "Share". (Web Share API shows the system sheet — no custom feedback needed.)
 
 **Icon:** `Share2` from lucide-react.
 
