@@ -8,6 +8,7 @@ export function useEventDeepLink(
 ) {
   const eventQuery = useQuery({
     queryKey: ["event-deep-link", eventId],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<EventWithVenue | null> => {
       const { data, error } = await supabase
         .from("events")
@@ -22,6 +23,7 @@ export function useEventDeepLink(
 
   const venueQuery = useQuery({
     queryKey: ["venue-deep-link", venueId],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<EventWithVenue[] | null> => {
       const { data, error } = await supabase
         .from("events")
@@ -40,6 +42,6 @@ export function useEventDeepLink(
     venueEvents: venueQuery.data ?? null,
     isLoading: eventQuery.isLoading || venueQuery.isLoading,
     eventNotFound: eventQuery.isSuccess && !eventQuery.data,
-    venueNotFound: venueQuery.isSuccess && (!venueQuery.data || venueQuery.data.length === 0),
+    venueNotFound: false,
   };
 }

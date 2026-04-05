@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEventDeepLink } from "@/hooks/useEventDeepLink";
 import { slugify } from "@/lib/utils";
@@ -32,6 +32,8 @@ export default function Index() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const flyToKeyRef = useRef<string | null>(null);
+
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedVenueEvents, setSelectedVenueEvents] = useState<EventWithVenue[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
@@ -47,27 +49,35 @@ export default function Index() {
     venueEvents: deepLinkedVenueEvents,
     isLoading: deepLinkLoading,
     eventNotFound,
-    venueNotFound,
   } = useEventDeepLink(eventId ?? null, venueId ?? null);
 
   // Open EventDetailPanel when deep link resolves
   useEffect(() => {
     if (!deepLinkedEvent) return;
     setSelectedEvent(deepLinkedEvent);
-    setFlyToVenue({
-      lng: deepLinkedEvent.venues.longitude,
-      lat: deepLinkedEvent.venues.latitude,
-    });
+    // Guard: only fly once per unique event (prevents re-fire on background refetches)
+    if (flyToKeyRef.current !== deepLinkedEvent.id) {
+      flyToKeyRef.current = deepLinkedEvent.id;
+      setFlyToVenue({
+        lng: deepLinkedEvent.venues.longitude,
+        lat: deepLinkedEvent.venues.latitude,
+      });
+    }
   }, [deepLinkedEvent]);
 
   // Open VenueEventsPanel when deep link resolves
   useEffect(() => {
     if (!deepLinkedVenueEvents?.length) return;
     setSelectedVenueEvents(deepLinkedVenueEvents);
-    setFlyToVenue({
-      lng: deepLinkedVenueEvents[0].venues.longitude,
-      lat: deepLinkedVenueEvents[0].venues.latitude,
-    });
+    // Guard: only fly once per unique venue (prevents re-fire on background refetches)
+    const venueId = deepLinkedVenueEvents[0].venue_id;
+    if (flyToKeyRef.current !== venueId) {
+      flyToKeyRef.current = venueId;
+      setFlyToVenue({
+        lng: deepLinkedVenueEvents[0].venues.longitude,
+        lat: deepLinkedVenueEvents[0].venues.latitude,
+      });
+    }
   }, [deepLinkedVenueEvents]);
 
   // Redirect on stale/invalid deep links
@@ -77,13 +87,6 @@ export default function Index() {
       toast({ title: "Event not found", description: "This event may have been removed." });
     }
   }, [eventId, eventNotFound, navigate, toast]);
-
-  useEffect(() => {
-    if (venueId && venueNotFound) {
-      navigate("/");
-      toast({ title: "Venue not found", description: "This venue may have been removed." });
-    }
-  }, [venueId, venueNotFound, navigate, toast]);
 
   // Sync panel close when URL params cleared (e.g. browser back button)
   useEffect(() => {
