@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music, ThumbsUp, ThumbsDown } from "lucide-react";
+import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music, ThumbsUp, ThumbsDown, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventWithVenue, EventTypeKey } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS, PRICE_TYPE_LABELS } from "@/types";
@@ -117,6 +117,22 @@ function PanelContent({
 }) {
   const [localRating, setLocalRating] = useState<"up" | "down" | null>(existingRating);
   const [voted, setVoted] = useState(!!existingRating);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ url });
+      } catch {
+        // user dismissed the share sheet — no feedback needed
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
 
   return (
     <div className="p-5 space-y-4">
@@ -219,6 +235,10 @@ function PanelContent({
             </a>
           </Button>
         )}
+        <Button variant="outline" className="gap-2" onClick={handleShare}>
+          <Share2 className="w-4 h-4" />
+          {copied ? "Copied!" : "Share"}
+        </Button>
       </div>
 
       {/* Accurate info? */}
