@@ -24,11 +24,10 @@ const defaultFilters: FilterState = {
 };
 
 export default function Index() {
+  // slugs are cosmetic in the URL; only IDs are used for lookups
   const { eventId, venueId } = useParams<{
     eventId?: string;
-    eventSlug?: string;
     venueId?: string;
-    venueSlug?: string;
   }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -77,14 +76,22 @@ export default function Index() {
       navigate("/");
       toast({ title: "Event not found", description: "This event may have been removed." });
     }
-  }, [eventId, eventNotFound]);
+  }, [eventId, eventNotFound, navigate, toast]);
 
   useEffect(() => {
     if (venueId && venueNotFound) {
       navigate("/");
       toast({ title: "Venue not found", description: "This venue may have been removed." });
     }
-  }, [venueId, venueNotFound]);
+  }, [venueId, venueNotFound, navigate, toast]);
+
+  // Sync panel close when URL params cleared (e.g. browser back button)
+  useEffect(() => {
+    if (!eventId && !venueId) {
+      setSelectedEvent(null);
+      setSelectedVenueEvents(null);
+    }
+  }, [eventId, venueId]);
 
   const handleSelectVenue = (venueEvents: EventWithVenue[]) => {
     if (venueEvents.length === 1) {
@@ -104,6 +111,7 @@ export default function Index() {
     navigate("/");
     setSelectedVenueEvents(null);
     setSelectedEvent(null);
+    setFlyToVenue(null);
   };
 
   const handleSelectEvent = (event: EventWithVenue) => {
