@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEventDeepLink } from "@/hooks/useEventDeepLink";
+import { slugify } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { MapView } from "@/components/MapView";
 import { FilterBar } from "@/components/FilterBar";
 import { EventDetailPanel } from "@/components/EventDetailPanel";
@@ -20,29 +24,99 @@ const defaultFilters: FilterState = {
 };
 
 export default function Index() {
+  const { eventId, venueId } = useParams<{
+    eventId?: string;
+    eventSlug?: string;
+    venueId?: string;
+    venueSlug?: string;
+  }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedVenueEvents, setSelectedVenueEvents] = useState<EventWithVenue[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [flyToVenue, setFlyToVenue] = useState<{ lng: number; lat: number } | null>(null);
+
+  const { data: events = [], isLoading } = useEvents(filters);
+  const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks();
+
+  const {
+    event: deepLinkedEvent,
+    venueEvents: deepLinkedVenueEvents,
+    isLoading: deepLinkLoading,
+    eventNotFound,
+    venueNotFound,
+  } = useEventDeepLink(eventId ?? null, venueId ?? null);
+
+  // Open EventDetailPanel when deep link resolves
+  useEffect(() => {
+    if (!deepLinkedEvent) return;
+    setSelectedEvent(deepLinkedEvent);
+    setFlyToVenue({
+      lng: deepLinkedEvent.venues.longitude,
+      lat: deepLinkedEvent.venues.latitude,
+    });
+  }, [deepLinkedEvent]);
+
+  // Open VenueEventsPanel when deep link resolves
+  useEffect(() => {
+    if (!deepLinkedVenueEvents?.length) return;
+    setSelectedVenueEvents(deepLinkedVenueEvents);
+    setFlyToVenue({
+      lng: deepLinkedVenueEvents[0].venues.longitude,
+      lat: deepLinkedVenueEvents[0].venues.latitude,
+    });
+  }, [deepLinkedVenueEvents]);
+
+  // Redirect on stale/invalid deep links
+  useEffect(() => {
+    if (eventId && eventNotFound) {
+      navigate("/");
+      toast({ title: "Event not found", description: "This event may have been removed." });
+    }
+  }, [eventId, eventNotFound]);
+
+  useEffect(() => {
+    if (venueId && venueNotFound) {
+      navigate("/");
+      toast({ title: "Venue not found", description: "This venue may have been removed." });
+    }
+  }, [venueId, venueNotFound]);
 
   const handleSelectVenue = (venueEvents: EventWithVenue[]) => {
     if (venueEvents.length === 1) {
+      const e = venueEvents[0];
+      navigate(`/event/${e.id}/${slugify(e.event_name)}`);
       setSelectedVenueEvents(null);
-      setSelectedEvent(venueEvents[0]);
+      setSelectedEvent(e);
     } else {
+      const v = venueEvents[0].venues;
+      navigate(`/venue/${v.id}/${slugify(v.name)}`);
       setSelectedVenueEvents(venueEvents);
       setSelectedEvent(null);
     }
   };
 
   const handleCloseAll = () => {
+    navigate("/");
     setSelectedVenueEvents(null);
     setSelectedEvent(null);
   };
 
-  const { data: events = [], isLoading } = useEvents(filters);
-  const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks();
+  const handleSelectEvent = (event: EventWithVenue) => {
+    navigate(`/event/${event.id}/${slugify(event.event_name)}`);
+    setSelectedEvent(event);
+  };
+
+  const handleBackToVenue = () => {
+    if (!selectedVenueEvents) return;
+    const v = selectedVenueEvents[0].venues;
+    navigate(`/venue/${v.id}/${slugify(v.name)}`);
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="h-[100dvh] w-screen overflow-hidden relative">
@@ -51,6 +125,7 @@ export default function Index() {
         events={events}
         selectedVenueId={selectedVenueEvents?.[0]?.venue_id ?? selectedEvent?.venue_id ?? null}
         onSelectVenue={handleSelectVenue}
+        flyToVenue={flyToVenue}
       />
 
       {/* Logo */}
@@ -73,7 +148,7 @@ export default function Index() {
         <VenueEventsPanel
           events={selectedVenueEvents}
           onClose={handleCloseAll}
-          onSelectEvent={setSelectedEvent}
+          onSelectEvent={handleSelectEvent}
         />
       )}
 
@@ -82,7 +157,7 @@ export default function Index() {
         <EventDetailPanel
           event={selectedEvent}
           onClose={handleCloseAll}
-          onBack={selectedVenueEvents ? () => setSelectedEvent(null) : undefined}
+          onBack={selectedVenueEvents ? handleBackToVenue : undefined}
           isBookmarked={isBookmarked(selectedEvent.id)}
           onToggleBookmark={() => {
             if (isBookmarked(selectedEvent.id)) {
@@ -99,7 +174,11 @@ export default function Index() {
         <SavedEventsPanel
           bookmarks={bookmarks}
           onClose={() => setSavedOpen(false)}
-          onSelectEvent={(e) => { setSelectedEvent(e); setSavedOpen(false); }}
+          onSelectEvent={(e) => {
+            navigate(`/event/${e.id}/${slugify(e.event_name)}`);
+            setSelectedEvent(e);
+            setSavedOpen(false);
+          }}
           onRemoveBookmark={(id) => removeBookmark(id)}
         />
       )}
@@ -111,7 +190,7 @@ export default function Index() {
       <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
 
       {/* Loading state */}
-      {isLoading && (
+      {(isLoading || deepLinkLoading) && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 bg-card/90 backdrop-blur-md rounded-full px-4 py-2 border border-border">
           <p className="text-xs text-muted-foreground font-body animate-pulse">Loading events…</p>
         </div>
