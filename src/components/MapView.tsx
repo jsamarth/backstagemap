@@ -10,6 +10,7 @@ interface MapViewProps {
   events: EventWithVenue[];
   selectedVenueId: string | null;
   onSelectVenue: (events: EventWithVenue[]) => void;
+  flyToVenue?: { lng: number; lat: number } | null;
 }
 
 const NYC_CENTER = { latitude: 40.7128, longitude: -73.9700, zoom: 12.5 };
@@ -41,7 +42,7 @@ const MAP_STYLE = {
   ],
 };
 
-export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps) {
+export function MapView({ events, selectedVenueId, onSelectVenue, flyToVenue }: MapViewProps) {
   const [aboutOpen, setAboutOpen] = useState(false);
   const { toast } = useToast();
   const mapRef = useRef<MapRef>(null);
@@ -62,6 +63,15 @@ export function MapView({ events, selectedVenueId, onSelectVenue }: MapViewProps
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!flyToVenue || !mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [flyToVenue.lng, flyToVenue.lat],
+      zoom: 15,
+      duration: 1200,
+    });
+  }, [flyToVenue]);
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) return;
