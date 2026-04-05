@@ -119,6 +119,13 @@ function PanelContent({
   const [voted, setVoted] = useState(!!existingRating);
   const [copied, setCopied] = useState(false);
 
+  // Clear "Copied!" label after 1.5s; useEffect handles cleanup on unmount
+  useEffect(() => {
+    if (!copied) return;
+    const timerId = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timerId);
+  }, [copied]);
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -128,9 +135,12 @@ function PanelContent({
         // user dismissed the share sheet — no feedback needed
       }
     } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+      } catch {
+        // clipboard access denied (e.g. private browsing) — no feedback needed
+      }
     }
   };
 
