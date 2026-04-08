@@ -14,7 +14,28 @@ interface VenueSearchBarProps {
 export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBarProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // On mobile, push the bar above the software keyboard when it appears
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const handleResize = () => {
+      if (window.innerWidth >= 640) return; // sm breakpoint — desktop unaffected
+      const offset = window.innerHeight - vv.height - vv.offsetTop;
+      setKeyboardOffset(Math.max(0, offset));
+    };
+
+    vv.addEventListener("resize", handleResize);
+    return () => vv.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Reset offset when popover closes (keyboard dismissed)
+  useEffect(() => {
+    if (!open) setKeyboardOffset(0);
+  }, [open]);
 
   // Derive unique venues from events, preserving insertion order
   const venues = useMemo(() => {
@@ -73,8 +94,8 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
 
   return (
     <div
-      className="absolute sm:top-4 sm:!bottom-auto sm:left-52 sm:translate-x-0 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg"
-      style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+      className="absolute sm:top-4 sm:!bottom-auto sm:left-52 sm:translate-x-0 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg transition-[bottom] duration-200"
+      style={{ bottom: `calc(4rem + env(safe-area-inset-bottom, 0px) + ${keyboardOffset}px)` }}
     >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
