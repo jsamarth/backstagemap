@@ -21,6 +21,7 @@ const defaultFilters: FilterState = {
   eventTypes: [],
   priceTypes: [],
   timeOfDay: [],
+  venueIds: [],
 };
 
 export default function Index() {
