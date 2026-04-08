@@ -12,6 +12,7 @@ import { LogoMark } from "@/components/LogoMark";
 import { SavedEventsPanel } from "@/components/SavedEventsPanel";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { FeedbackModal } from "@/components/FeedbackModal";
+import { VenueSearchBar } from "@/components/VenueSearchBar";
 import { useEvents } from "@/hooks/useEvents";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import type { FilterState, EventWithVenue } from "@/types";
@@ -44,6 +45,10 @@ export default function Index() {
 
   const { data: events = [], isLoading } = useEvents(filters);
   const { bookmarks, isBookmarked, addBookmark, removeBookmark } = useBookmarks();
+
+  const filteredEvents = filters.venueIds.length > 0
+    ? events.filter((e) => filters.venueIds.includes(e.venue_id))
+    : events;
 
   const {
     event: deepLinkedEvent,
@@ -134,7 +139,7 @@ export default function Index() {
     <div className="h-[100dvh] w-screen overflow-hidden relative">
       {/* Map fills entire viewport */}
       <MapView
-        events={events}
+        events={filteredEvents}
         selectedVenueId={selectedVenueEvents?.[0]?.venue_id ?? selectedEvent?.venue_id ?? null}
         onSelectVenue={handleSelectVenue}
         flyToVenue={flyToVenue}
@@ -142,6 +147,13 @@ export default function Index() {
 
       {/* Logo */}
       <LogoMark />
+
+      {/* Venue search */}
+      <VenueSearchBar
+        events={events}
+        selectedIds={filters.venueIds}
+        onChange={(ids) => setFilters((f) => ({ ...f, venueIds: ids }))}
+      />
 
       {/* Filter bar */}
       <FilterBar
