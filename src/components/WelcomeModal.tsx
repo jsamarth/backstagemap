@@ -22,6 +22,10 @@ export function WelcomeModal() {
             Discover underground and local live music happening tonight across NYC - think small venues, local acts, and hidden gems, not big concerts.
             <br />
             Tap any pin to explore shows near you, and bookmark the ones you don't want to miss.
+            <br /><br />
+            <span className="text-xs text-muted-foreground/70 italic">
+              We do our best to keep events accurate, but details may change - always double-check with the venue.
+            </span>
           </DialogDescription>
         </DialogHeader>
         <Button onClick={handleDismiss} className="w-full mt-2">Got it</Button>
