@@ -24,7 +24,7 @@ export function WelcomeModal() {
             Tap any pin to explore shows near you, and bookmark the ones you don't want to miss.
             <br /><br />
             <span className="text-xs text-muted-foreground/70 italic">
-              We do our best to keep events accurate, but details may change - always double-check with the venue.
+              We do our best to keep events accurate, but they may not always be 100% accurate - always double-check with the venue.
             </span>
           </DialogDescription>
         </DialogHeader>
