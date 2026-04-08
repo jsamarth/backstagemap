@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { EventWithVenue } from "@/types";
+import { NEIGHBORHOOD_LABELS } from "@/types";
 
 interface VenueSearchBarProps {
   events: EventWithVenue[];
@@ -139,7 +140,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
                     onClick={(e) => e.stopPropagation()}
                   />
                   <span className="flex-1 truncate text-left">{venue.name}</span>
-                  <span className="text-xs text-muted-foreground">{venue.neighborhood}</span>
+                  <span className="text-xs text-muted-foreground">{NEIGHBORHOOD_LABELS[venue.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ?? venue.neighborhood}</span>
                 </button>
               ))
             )}
