@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { Search, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -72,7 +72,10 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
     : "Search venues";
 
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg">
+    <div
+      className="absolute sm:top-4 sm:!bottom-auto sm:left-52 sm:translate-x-0 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg"
+      style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -84,7 +87,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
             }`}
           >
             <Search className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline truncate max-w-[160px]">{triggerLabel}</span>
+            <span className="inline truncate max-w-[160px]">{triggerLabel}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-0 bg-card border-border" align="center">
@@ -128,11 +131,10 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
           variant="ghost"
           size="sm"
           aria-label="Clear venue filter"
-          className="rounded-full text-xs text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 gap-1"
+          className="rounded-full text-xs text-red-400 hover:bg-red-50 hover:text-red-500"
           onClick={() => onChange([])}
         >
-          <Trash2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Clear</span>
+          <RotateCcw className="w-3.5 h-3.5" />
         </Button>
       )}
     </div>

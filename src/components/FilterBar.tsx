@@ -1,4 +1,4 @@
-import { Calendar, Music, DollarSign, Clock, Trash2, Bookmark, MessageSquare } from "lucide-react";
+import { Calendar, Music, DollarSign, Clock, RotateCcw, Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -120,9 +120,8 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedb
       </Popover>
 
       {activeCount > 0 && (
-        <Button variant="ghost" size="sm" className="rounded-full text-xs text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 gap-1" onClick={clearAll}>
-          <Trash2 className="w-3 h-3" />
-          <span className="hidden sm:inline">Clear</span>
+        <Button variant="ghost" size="sm" className="rounded-full text-xs text-red-400 hover:bg-red-50 hover:text-red-500" onClick={clearAll}>
+          <RotateCcw className="w-3.5 h-3.5" />
         </Button>
       )}
 
