@@ -4,7 +4,7 @@ import type { EventWithVenue, FilterState } from "@/types";
 
 export function useEvents(filters: FilterState) {
   return useQuery({
-    queryKey: ["events", filters],
+    queryKey: ["events", { date: filters.date, eventTypes: filters.eventTypes, priceTypes: filters.priceTypes, timeOfDay: filters.timeOfDay }],
     queryFn: async (): Promise<EventWithVenue[]> => {
       let query = supabase
         .from("events")

@@ -128,19 +128,11 @@ function PanelContent({
 
   const handleShare = async () => {
     const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ url });
-      } catch {
-        // user dismissed the share sheet — no feedback needed
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        setCopied(true);
-      } catch {
-        // clipboard access denied (e.g. private browsing) — no feedback needed
-      }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      // clipboard access denied (e.g. private browsing) — no feedback needed
     }
   };
 

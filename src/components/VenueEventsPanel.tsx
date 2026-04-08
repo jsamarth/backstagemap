@@ -1,4 +1,5 @@
-import { X, Clock, Music } from "lucide-react";
+import { X, Clock, Music, Share2, Check } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import type { EventWithVenue, EventTypeKey } from "@/types";
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, EVENT_TYPE_HEX } from "@/types";
@@ -43,6 +44,24 @@ function Content({
   onClose: () => void;
   onSelectEvent: (event: EventWithVenue) => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timerId = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timerId);
+  }, [copied]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    } catch {
+      // clipboard access denied — no feedback needed
+    }
+  };
+
   return (
     <div className="p-5 space-y-4">
       {/* Header */}
@@ -50,6 +69,15 @@ function Content({
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Music className="w-4 h-4 text-primary shrink-0" />
           <h2 className="text-lg font-display font-bold truncate">{venueName}</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleShare}
+            className={`shrink-0 w-7 h-7 transition-colors ${copied ? "text-green-500" : "text-muted-foreground hover:text-foreground"}`}
+            title={copied ? "Copied!" : "Share venue"}
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+          </Button>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 -mt-1 -mr-2">
           <X className="w-5 h-5" />
