@@ -81,7 +81,8 @@ describe("VenueSearchBar", () => {
   it("shows neighborhood label next to venue name in dropdown", () => {
     render(<VenueSearchBar events={events} selectedIds={[]} onChange={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: /search venues/i }));
-    expect(screen.getByText("williamsburg")).toBeInTheDocument();
+    // v1 and v3 are both williamsburg; v2 is bushwick — each row shows its own neighborhood
+    expect(screen.getAllByText("williamsburg")).toHaveLength(2);
     expect(screen.getByText("bushwick")).toBeInTheDocument();
   });
 });

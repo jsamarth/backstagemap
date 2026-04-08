@@ -53,9 +53,6 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
     return [...selected, ...unselected];
   }, [venues, selectedIds]);
 
-  // Track which neighborhoods have already been shown to avoid duplicate text nodes
-  const seenNeighborhoods = new Set<string>();
-
   const triggerLabel = hasSelection
     ? `${firstName}${overflowCount > 0 ? ` +${overflowCount} more` : ""}`
     : "Search venues";
@@ -83,28 +80,22 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
             <CommandInput placeholder="Search venues..." />
             <CommandList>
               <CommandEmpty>No venues found.</CommandEmpty>
-              {sortedVenues.map((venue) => {
-                const showNeighborhood = !seenNeighborhoods.has(venue.neighborhood);
-                if (showNeighborhood) seenNeighborhoods.add(venue.neighborhood);
-                return (
-                  <CommandItem
-                    key={venue.id}
-                    value={venue.name}
-                    onSelect={() => toggle(venue.id)}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Checkbox
-                      checked={selectedIds.includes(venue.id)}
-                      onCheckedChange={() => toggle(venue.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <span className="flex-1 truncate text-sm">{venue.name}</span>
-                    {showNeighborhood && (
-                      <span className="text-xs text-muted-foreground">{venue.neighborhood}</span>
-                    )}
-                  </CommandItem>
-                );
-              })}
+              {sortedVenues.map((venue) => (
+                <CommandItem
+                  key={venue.id}
+                  value={venue.name}
+                  onSelect={() => toggle(venue.id)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Checkbox
+                    checked={selectedIds.includes(venue.id)}
+                    onCheckedChange={() => toggle(venue.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="flex-1 truncate text-sm">{venue.name}</span>
+                  <span className="text-xs text-muted-foreground">{venue.neighborhood}</span>
+                </CommandItem>
+              ))}
             </CommandList>
           </Command>
         </PopoverContent>
