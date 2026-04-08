@@ -8,6 +8,7 @@ const makeEvent = (venueId: string, venueName: string, neighborhood = "williamsb
     id: `evt-${venueId}`,
     venue_id: venueId,
     venues: { id: venueId, name: venueName, neighborhood },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any;
 
 const events = [
