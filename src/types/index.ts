@@ -55,6 +55,7 @@ export interface FilterState {
   eventTypes: EventTypeKey[];
   priceTypes: PriceTypeKey[];
   timeOfDay: ("afternoon" | "evening" | "late_night")[];
+  venueIds: string[];
 }
 
 // Shape of data returned by GPT-4o before upsert into `events`

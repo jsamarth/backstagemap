@@ -24,7 +24,7 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedb
     filters.timeOfDay.length;
 
   const clearAll = () =>
-    onChange({ date: null, eventTypes: [], priceTypes: [], timeOfDay: [] });
+    onChange({ date: null, eventTypes: [], priceTypes: [], timeOfDay: [], venueIds: [] });
 
   const setDate = (d: string | null) => onChange({ ...filters, date: d });
 
