@@ -18,19 +18,27 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // On mobile, push the bar above the software keyboard when it appears
+  // On mobile, push the bar above the software keyboard when it appears.
+  // Use rAF batching so rapid resize events don't cause jitter.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
 
+    let rafId: number;
     const handleResize = () => {
-      if (window.innerWidth >= 640) return; // sm breakpoint — desktop unaffected
-      const offset = window.innerHeight - vv.height - vv.offsetTop;
-      setKeyboardOffset(Math.max(0, offset));
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (window.innerWidth >= 640) return; // sm breakpoint — desktop unaffected
+        const offset = window.innerHeight - vv.height - vv.offsetTop;
+        setKeyboardOffset(Math.max(0, offset));
+      });
     };
 
     vv.addEventListener("resize", handleResize);
-    return () => vv.removeEventListener("resize", handleResize);
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // Reset offset when popover closes (keyboard dismissed)
@@ -95,7 +103,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
 
   return (
     <div
-      className="absolute sm:top-4 sm:!bottom-auto sm:left-52 sm:translate-x-0 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg transition-[bottom] duration-200"
+      className="absolute sm:top-4 sm:!bottom-auto sm:left-52 sm:translate-x-0 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-card/90 backdrop-blur-md border border-border px-3 py-2 shadow-lg"
       style={{ bottom: `calc(4rem + env(safe-area-inset-bottom, 0px) + ${keyboardOffset}px)` }}
     >
       <Popover open={open} onOpenChange={setOpen}>
@@ -112,7 +120,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
             <span className="inline truncate max-w-[160px]">{triggerLabel}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-0 bg-card border-border" align="center">
+        <PopoverContent className="w-64 p-0 bg-card border-border" align="center" side="top" sideOffset={8}>
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
@@ -123,7 +131,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
               className="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
           </div>
-          <div className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
+          <div className="max-h-[96px] overflow-y-auto overflow-x-hidden p-1">
             {sortedVenues.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">No venues found.</div>
             ) : (
