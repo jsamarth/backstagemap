@@ -82,7 +82,7 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
             <DialogTitle className="font-display">Like this app? Hate it?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground -mt-1">
-            Let me know your thoughts and requests — every bit of feedback helps.
+            Let us know your thoughts and requests — every bit of feedback helps.
           </p>
           <form onSubmit={handleSubmit} className="space-y-3 mt-1">
             <Input
