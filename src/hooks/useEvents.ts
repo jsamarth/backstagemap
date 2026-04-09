@@ -8,7 +8,7 @@ export function useEvents(filters: FilterState) {
     queryFn: async (): Promise<EventWithVenue[]> => {
       let query = supabase
         .from("events")
-        .select("*, venues(*)")
+        .select("*, venues(*), event_analytics(*)")
         .gte("date", new Date().toISOString().split("T")[0])
         .order("date", { ascending: true });
 
@@ -28,6 +28,16 @@ export function useEvents(filters: FilterState) {
       if (error) throw error;
 
       let results = (data as EventWithVenue[]) || [];
+
+      // Filter out low-accuracy events: hide if downvotes >= 2 AND downvotes - upvotes >= 2
+      results = results.filter((e) => {
+        const analytics = Array.isArray((e as any).event_analytics)
+          ? (e as any).event_analytics[0]
+          : (e as any).event_analytics;
+        if (!analytics) return true;
+        const { downvotes = 0, upvotes = 0 } = analytics;
+        return !(downvotes >= 2 && downvotes - upvotes >= 2);
+      });
 
       // Client-side time-of-day filter
       if (filters.timeOfDay.length > 0) {
