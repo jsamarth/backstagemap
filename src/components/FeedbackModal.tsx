@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,26 +11,6 @@ interface FeedbackModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const PRIVACY_TEXT = `Last updated: March 2026
-
-What we collect
-When you submit feedback, we collect: your name, email address, your feedback text (up to 500 characters), and the timestamp of submission.
-
-How it's used
-Your feedback is read by the developer to improve the app. Your email may be used to reply to your feedback.
-
-Retention
-Feedback is retained indefinitely unless you request deletion.
-
-Third-party sharing
-We do not share your information with any third parties.
-
-Requesting deletion
-To request deletion of your feedback, submit a new message via the feedback form referencing your original submission.
-
-Governing law
-This policy is governed by applicable law.`;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_THOUGHTS = 500;
@@ -41,7 +21,6 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
   const [emailError, setEmailError] = useState("");
   const [thoughts, setThoughts] = useState("");
   const [loading, setLoading] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
   const { toast } = useToast();
 
   const validateEmail = (value: string) => {
@@ -119,25 +98,14 @@ export function FeedbackModal({ open, onOpenChange }: FeedbackModalProps) {
             </Button>
           </form>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            <button
-              type="button"
+            <Link
+              to="/privacy"
               className="underline underline-offset-2 hover:text-foreground transition-colors"
-              onClick={() => setPrivacyOpen(true)}
+              onClick={() => onOpenChange(false)}
             >
               Privacy Policy
-            </button>
+            </Link>
           </p>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Privacy Policy</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="h-64 pr-3">
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{PRIVACY_TEXT}</p>
-          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>
