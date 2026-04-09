@@ -28,12 +28,14 @@ export function WelcomeModal() {
             <img src="/logo-no-bg.png" alt="BackstageMap logo" className="h-12 w-12 mb-2" />
             <DialogTitle className="font-display text-xl">Backstage Map</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground mt-1">
-              Discover underground and local live music happening tonight across NYC - think small venues, local acts, and hidden gems, not big concerts.
-              <br />
-              Tap any pin to explore shows near you, and bookmark the ones you don't want to miss.
+              You wanted to catch a local show tonight, but ended up lost in a maze of outdated venue calendars. Sound familiar?
+              <br /><br />
+              This is the fix. One map, every underground and local gig happening across NYC tonight: small venues, local acts, hidden gems. Filter by vibe, price, or time of night and find your show in seconds.
+              <br /><br />
+              Tap any pin to explore. Bookmark the ones you don't want to miss.
               <br /><br />
               <span className="text-xs text-muted-foreground/70 italic">
-                We do our best to keep events accurate, but they may not always be 100% accurate - always double-check with the venue's website.
+                Events may not always be 100% accurate, so always double-check with the venue's website.
               </span>
             </DialogDescription>
           </DialogHeader>
