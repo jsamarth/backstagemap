@@ -19,6 +19,7 @@ import type { FilterState, EventWithVenue } from "@/types";
 
 const defaultFilters: FilterState = {
   date: null,
+  neighborhoods: [],
   eventTypes: [],
   priceTypes: [],
   timeOfDay: [],

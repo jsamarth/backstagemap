@@ -4,7 +4,7 @@ import type { EventWithVenue, FilterState } from "@/types";
 
 export function useEvents(filters: FilterState) {
   return useQuery({
-    queryKey: ["events", { date: filters.date, eventTypes: filters.eventTypes, priceTypes: filters.priceTypes, timeOfDay: filters.timeOfDay }],
+    queryKey: ["events", { date: filters.date, eventTypes: filters.eventTypes, priceTypes: filters.priceTypes, timeOfDay: filters.timeOfDay, neighborhoods: filters.neighborhoods }],
     queryFn: async (): Promise<EventWithVenue[]> => {
       let query = supabase
         .from("events")
@@ -38,6 +38,13 @@ export function useEvents(filters: FilterState) {
         const { downvotes = 0, upvotes = 0 } = analytics;
         return !(downvotes >= 2 && downvotes - upvotes >= 2);
       });
+
+      // Client-side neighborhood filter
+      if (filters.neighborhoods.length > 0) {
+        results = results.filter((e) =>
+          filters.neighborhoods.includes(e.venues.neighborhood as any)
+        );
+      }
 
       // Client-side time-of-day filter
       if (filters.timeOfDay.length > 0) {

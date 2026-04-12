@@ -52,6 +52,7 @@ export const PRICE_TYPE_LABELS: Record<PriceTypeKey, string> = {
 
 export interface FilterState {
   date: string | null;
+  neighborhoods: NeighborhoodKey[];
   eventTypes: EventTypeKey[];
   priceTypes: PriceTypeKey[];
   timeOfDay: ("afternoon" | "evening" | "late_night")[];
