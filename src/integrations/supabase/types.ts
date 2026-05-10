@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       bookmarks: {
@@ -38,6 +63,44 @@ export type Database = {
             foreignKeyName: "bookmarks_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_analytics: {
+        Row: {
+          downvotes: number
+          event_id: string
+          last_viewed_at: string | null
+          source_url_clicks: number
+          updated_at: string
+          upvotes: number
+          views: number
+        }
+        Insert: {
+          downvotes?: number
+          event_id: string
+          last_viewed_at?: string | null
+          source_url_clicks?: number
+          updated_at?: string
+          upvotes?: number
+          views?: number
+        }
+        Update: {
+          downvotes?: number
+          event_id?: string
+          last_viewed_at?: string | null
+          source_url_clicks?: number
+          updated_at?: string
+          upvotes?: number
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -105,6 +168,65 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          thoughts: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          thoughts: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          thoughts?: string
+        }
+        Relationships: []
+      }
+      scrape_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          status: string
+          venue_id: string | null
+          workflow: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status: string
+          venue_id?: string | null
+          workflow: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status?: string
+          venue_id?: string | null
+          workflow?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrape_logs_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           address: string
@@ -116,9 +238,14 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
-          neighborhood: Database["public"]["Enums"]["neighborhood"]
+          neighborhood: string | null
           raw_html_url: string | null
+          scrape_error: string | null
+          scrape_fail_count: number
+          scrape_provider: string | null
           scrape_status: Database["public"]["Enums"]["scrape_status"]
+          scraped_url: string | null
+          sub_urls: Json | null
           venue_type: Database["public"]["Enums"]["venue_type"]
           website_url: string | null
         }
@@ -132,9 +259,14 @@ export type Database = {
           latitude: number
           longitude: number
           name: string
-          neighborhood: Database["public"]["Enums"]["neighborhood"]
+          neighborhood?: string | null
           raw_html_url?: string | null
+          scrape_error?: string | null
+          scrape_fail_count?: number
+          scrape_provider?: string | null
           scrape_status?: Database["public"]["Enums"]["scrape_status"]
+          scraped_url?: string | null
+          sub_urls?: Json | null
           venue_type: Database["public"]["Enums"]["venue_type"]
           website_url?: string | null
         }
@@ -148,9 +280,14 @@ export type Database = {
           latitude?: number
           longitude?: number
           name?: string
-          neighborhood?: Database["public"]["Enums"]["neighborhood"]
+          neighborhood?: string | null
           raw_html_url?: string | null
+          scrape_error?: string | null
+          scrape_fail_count?: number
+          scrape_provider?: string | null
           scrape_status?: Database["public"]["Enums"]["scrape_status"]
+          scraped_url?: string | null
+          sub_urls?: Json | null
           venue_type?: Database["public"]["Enums"]["venue_type"]
           website_url?: string | null
         }
@@ -161,11 +298,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      increment_event_view: {
-        Args: { p_event_id: string }
-        Returns: undefined
-      }
-      increment_source_url_click: {
+      increment_event_downvote: {
         Args: { p_event_id: string }
         Returns: undefined
       }
@@ -173,23 +306,21 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: undefined
       }
-      increment_event_downvote: {
+      increment_event_view: { Args: { p_event_id: string }; Returns: undefined }
+      increment_source_url_click: {
         Args: { p_event_id: string }
         Returns: undefined
       }
     }
     Enums: {
       event_type: "live_band" | "dj" | "open_mic" | "jam_session"
-      neighborhood:
-        | "williamsburg"
-        | "bushwick"
-        | "bed_stuy"
-        | "east_village"
-        | "west_village"
-        | "chelsea"
-        | "greenpoint"
       price_type: "free" | "cover" | "ticketed"
-      scrape_status: "not_started" | "html_scraped" | "extracted"
+      scrape_status:
+        | "not_started"
+        | "html_scraped"
+        | "extracted"
+        | "failed"
+        | "no_events"
       venue_type: "park" | "bar" | "cafe" | "performance_venue" | "club"
     }
     CompositeTypes: {
@@ -315,23 +446,21 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-export type AnalyticsRpc = keyof DefaultSchema["Functions"];
-
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       event_type: ["live_band", "dj", "open_mic", "jam_session"],
-      neighborhood: [
-        "williamsburg",
-        "bushwick",
-        "bed_stuy",
-        "east_village",
-        "west_village",
-        "chelsea",
-        "greenpoint",
-      ],
       price_type: ["free", "cover", "ticketed"],
-      scrape_status: ["not_started", "html_scraped", "extracted"],
+      scrape_status: [
+        "not_started",
+        "html_scraped",
+        "extracted",
+        "failed",
+        "no_events",
+      ],
       venue_type: ["park", "bar", "cafe", "performance_venue", "club"],
     },
   },

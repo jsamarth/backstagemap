@@ -42,7 +42,7 @@ export function useEvents(filters: FilterState) {
       // Client-side neighborhood filter
       if (filters.neighborhoods.length > 0) {
         results = results.filter((e) =>
-          filters.neighborhoods.includes(e.venues.neighborhood as any)
+          e.venues.neighborhood !== null && filters.neighborhoods.includes(e.venues.neighborhood)
         );
       }
 

@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
-import type { FilterState, EventTypeKey, PriceTypeKey, NeighborhoodKey } from "@/types";
-import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, PRICE_TYPE_LABELS, NEIGHBORHOOD_LABELS } from "@/types";
+import type { FilterState, EventTypeKey, PriceTypeKey } from "@/types";
+import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, PRICE_TYPE_LABELS, formatNeighborhood } from "@/types";
+import { useNeighborhoods } from "@/hooks/useNeighborhoods";
 import { format, addDays, nextSaturday, nextSunday } from "date-fns";
 
 interface FilterBarProps {
@@ -17,6 +18,7 @@ interface FilterBarProps {
 
 export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedbackClick }: FilterBarProps) {
   const today = new Date();
+  const { data: neighborhoods = [], isLoading: neighborhoodsLoading } = useNeighborhoods();
   const activeCount =
     (filters.date ? 1 : 0) +
     filters.neighborhoods.length +
@@ -43,13 +45,21 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedb
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-48 bg-card border-border" align="start">
-          <div className="space-y-2">
-            {(Object.entries(NEIGHBORHOOD_LABELS) as [NeighborhoodKey, string][]).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
-                <Checkbox checked={filters.neighborhoods.includes(key)} onCheckedChange={() => onChange({ ...filters, neighborhoods: toggleArray(filters.neighborhoods, key) })} />
-                {label}
-              </label>
-            ))}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {neighborhoodsLoading ? (
+              <>
+                <div className="h-5 bg-muted rounded animate-pulse" />
+                <div className="h-5 bg-muted rounded animate-pulse" />
+                <div className="h-5 bg-muted rounded animate-pulse" />
+              </>
+            ) : (
+              neighborhoods.map((key) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
+                  <Checkbox checked={filters.neighborhoods.includes(key)} onCheckedChange={() => onChange({ ...filters, neighborhoods: toggleArray(filters.neighborhoods, key) })} />
+                  {formatNeighborhood(key)}
+                </label>
+              ))
+            )}
           </div>
         </PopoverContent>
       </Popover>

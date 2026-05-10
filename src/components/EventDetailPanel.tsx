@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X, ChevronLeft, Bookmark, BookmarkCheck, ExternalLink, MapPin, Clock, DollarSign, Music, ThumbsUp, ThumbsDown, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventWithVenue, EventTypeKey } from "@/types";
-import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, NEIGHBORHOOD_LABELS, PRICE_TYPE_LABELS } from "@/types";
+import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, formatNeighborhood, PRICE_TYPE_LABELS } from "@/types";
 import { format } from "date-fns";
 import { useEventAnalytics } from "@/hooks/useEventAnalytics";
 
@@ -181,9 +181,11 @@ function PanelContent({
             {event.venues.address}
           </a>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="text-xs font-body capitalize">{NEIGHBORHOOD_LABELS[event.venues.neighborhood as keyof typeof NEIGHBORHOOD_LABELS]}</span>
-        </div>
+        {event.venues.neighborhood && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="text-xs font-body">{formatNeighborhood(event.venues.neighborhood)}</span>
+          </div>
+        )}
       </div>
 
       {/* Date & Time */}

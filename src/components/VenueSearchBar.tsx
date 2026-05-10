@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { EventWithVenue } from "@/types";
-import { NEIGHBORHOOD_LABELS } from "@/types";
+import { formatNeighborhood } from "@/types";
 
 interface VenueSearchBarProps {
   events: EventWithVenue[];
@@ -49,7 +49,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
   // Derive unique venues from events, preserving insertion order
   const venues = useMemo(() => {
     const seen = new Set<string>();
-    const result: { id: string; name: string; neighborhood: string }[] = [];
+    const result: { id: string; name: string; neighborhood: string | null }[] = [];
     for (const e of events) {
       if (!seen.has(e.venue_id)) {
         seen.add(e.venue_id);
@@ -90,7 +90,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
   const sortedVenues = useMemo(() => {
     const q = search.toLowerCase();
     const filtered = q
-      ? venues.filter((v) => v.name.toLowerCase().includes(q) || v.neighborhood.toLowerCase().includes(q))
+      ? venues.filter((v) => v.name.toLowerCase().includes(q) || v.neighborhood?.toLowerCase().includes(q))
       : venues;
     const selected = filtered.filter((v) => selectedIds.includes(v.id));
     const unselected = filtered.filter((v) => !selectedIds.includes(v.id));
@@ -148,7 +148,7 @@ export function VenueSearchBar({ events, selectedIds, onChange }: VenueSearchBar
                     onClick={(e) => e.stopPropagation()}
                   />
                   <span className="flex-1 truncate text-left">{venue.name}</span>
-                  <span className="text-xs text-muted-foreground">{NEIGHBORHOOD_LABELS[venue.neighborhood as keyof typeof NEIGHBORHOOD_LABELS] ?? venue.neighborhood}</span>
+                  {venue.neighborhood && <span className="text-xs text-muted-foreground">{formatNeighborhood(venue.neighborhood)}</span>}
                 </button>
               ))
             )}

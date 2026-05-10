@@ -10,8 +10,16 @@ export type EventWithVenue = Event & {
 };
 
 export type EventTypeKey = "live_band" | "dj" | "open_mic" | "jam_session";
-export type NeighborhoodKey = "williamsburg" | "bushwick" | "bed_stuy" | "east_village" | "west_village" | "chelsea" | "greenpoint";
 export type PriceTypeKey = "free" | "cover" | "ticketed";
+
+export function formatNeighborhood(key: string): string {
+  return key
+    .split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+    .replace('Bed Stuy', 'Bed-Stuy')
+    .replace("Hell S Kitchen", "Hell's Kitchen");
+}
 
 export const EVENT_TYPE_LABELS: Record<EventTypeKey, string> = {
   live_band: "Live Band",
@@ -34,16 +42,6 @@ export const EVENT_TYPE_HEX: Record<EventTypeKey, string> = {
   jam_session: "#22C55E",
 };
 
-export const NEIGHBORHOOD_LABELS: Record<NeighborhoodKey, string> = {
-  williamsburg: "Williamsburg",
-  bushwick: "Bushwick",
-  bed_stuy: "Bed-Stuy",
-  east_village: "East Village",
-  west_village: "West Village",
-  chelsea: "Chelsea",
-  greenpoint: "Greenpoint",
-};
-
 export const PRICE_TYPE_LABELS: Record<PriceTypeKey, string> = {
   free: "Free",
   cover: "Cover",
@@ -52,7 +50,7 @@ export const PRICE_TYPE_LABELS: Record<PriceTypeKey, string> = {
 
 export interface FilterState {
   date: string | null;
-  neighborhoods: NeighborhoodKey[];
+  neighborhoods: string[];
   eventTypes: EventTypeKey[];
   priceTypes: PriceTypeKey[];
   timeOfDay: ("afternoon" | "evening" | "late_night")[];
