@@ -2,6 +2,7 @@ import { task, schedules } from '@trigger.dev/sdk'
 import { createClient } from '@supabase/supabase-js'
 import type { DiscoveryPayload, DiscoveryOutput } from '@/trigger/lib/types'
 import { ScrapeWorkflow } from '@/trigger/lib/types'
+import { ALL_NEIGHBORHOODS } from '@/trigger/lib/constants'
 
 const QUERIES = [
   'live music bar',
@@ -11,7 +12,44 @@ const QUERIES = [
   'dj bar',
 ]
 
-const BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'The Bronx', 'Staten Island']
+type PlacesResult = {
+  place_id: string
+  name: string
+  formatted_address: string
+  geometry: { location: { lat: number; lng: number } }
+}
+
+async function fetchPlacesResults(
+  query: string,
+  neighborhood: string,
+  borough: string,
+  apiKey: string,
+  maxResults = 50,
+): Promise<PlacesResult[]> {
+  const location = borough === 'jersey' ? 'New Jersey' : 'New York City'
+  const results: PlacesResult[] = []
+  let pageToken: string | undefined
+
+  do {
+    if (pageToken) await new Promise(r => setTimeout(r, 2000))
+    const url = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json')
+    url.searchParams.set('query', `${query} in ${neighborhood.replace(/_/g, ' ')}, ${location}`)
+    url.searchParams.set('key', apiKey)
+    if (pageToken) url.searchParams.set('pagetoken', pageToken)
+
+    const res  = await fetch(url.toString())
+    const data = await res.json()
+
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      throw new Error(`Places API error: ${data.status} — ${data.error_message ?? ''}`)
+    }
+
+    results.push(...(data.results ?? []))
+    pageToken = data.next_page_token
+  } while (pageToken && results.length < maxResults)
+
+  return results.slice(0, maxResults)
+}
 
 type PlaceDetails = { website: string | null; neighborhood: string | null }
 
@@ -59,27 +97,16 @@ async function runDiscovery(payload: DiscoveryPayload): Promise<DiscoveryOutput>
   let skipped  = 0
   let errors   = 0
 
-  console.log(`[venue-discovery] START queries=${QUERIES.length * BOROUGHS.length} limit=${isFinite(limit) ? limit : 'none'} force=${force}`)
+  const { neighborhood: searchNeighborhood, borough } = ALL_NEIGHBORHOODS[Math.floor(Math.random() * ALL_NEIGHBORHOODS.length)]
+  console.log(`[venue-discovery] START neighborhood=${searchNeighborhood} borough=${borough} limit=${isFinite(limit) ? limit : 'none'} force=${force}`)
 
   outer:
-  for (const borough of BOROUGHS) {
-    for (const query of QUERIES) {
+  for (const query of QUERIES) {
     await new Promise(r => setTimeout(r, 200))
-    console.log(`[venue-discovery] → "${query} in ${borough}, New York City" ...`)
+    console.log(`[venue-discovery] → "${query} in ${searchNeighborhood}" ...`)
 
     try {
-      const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json')
-      searchUrl.searchParams.set('query', `${query} in ${borough}, New York City`)
-      searchUrl.searchParams.set('key', googleKey)
-
-      const res  = await fetch(searchUrl.toString())
-      const data = await res.json()
-
-      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Places API error: ${data.status} — ${data.error_message ?? ''}`)
-      }
-
-      const results = data.results ?? []
+      const results = await fetchPlacesResults(query, searchNeighborhood, borough, googleKey, 50)
       console.log(`[venue-discovery]   got ${results.length} results`)
 
       for (const place of results) {
@@ -140,8 +167,7 @@ async function runDiscovery(payload: DiscoveryPayload): Promise<DiscoveryOutput>
         error:    errMsg,
       })
     }
-    } // end for query
-  } // end for borough
+  }
 
   console.log(`[venue-discovery] DONE inserted=${inserted} skipped=${skipped} errors=${errors}`)
   return { inserted, skipped, errors }
