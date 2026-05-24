@@ -59,27 +59,29 @@ export interface FilterState {
 
 // Shape of data returned by GPT-4o before upsert into `events`
 export type ExtractedEvent = {
-  event_name:   string
-  artist_name:  string | null
-  date:         string           // YYYY-MM-DD
-  time_start:   string | null    // HH:MM 24-hour
-  time_end:     string | null    // HH:MM 24-hour
-  price_type:   PriceTypeKey
-  price_amount: number | null
-  description:  string | null
-  event_type:   EventTypeKey
+  event_name:     string
+  artist_name:    string | null
+  date:           string           // YYYY-MM-DD
+  time_start:     string | null    // HH:MM 24-hour
+  time_end:       string | null    // HH:MM 24-hour
+  price_type:     PriceTypeKey
+  price_amount:   number | null
+  description:    string | null
+  event_type:     EventTypeKey
+  is_music_event: boolean
 }
 
 export const ExtractedEventSchema = z.object({
-  event_name:   z.string().min(1).max(200),
-  artist_name:  z.string().max(200).nullish(),
-  date:         z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time_start:   z.string().regex(/^\d{2}:\d{2}$/).nullish(),
-  time_end:     z.string().regex(/^\d{2}:\d{2}$/).nullish(),
-  price_type:   z.enum(['free', 'cover', 'ticketed']),
-  price_amount: z.number().min(0).max(10000).nullish(),
-  description:  z.string().max(1000).nullish(),
-  event_type:   z.enum(['live_band', 'dj', 'open_mic', 'jam_session']),
+  event_name:     z.string().min(1).max(200),
+  artist_name:    z.string().max(200).nullish(),
+  date:           z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time_start:     z.string().regex(/^\d{2}:\d{2}$/).nullish(),
+  time_end:       z.string().regex(/^\d{2}:\d{2}$/).nullish(),
+  price_type:     z.enum(['free', 'cover', 'ticketed']),
+  price_amount:   z.number().min(0).max(10000).nullish(),
+  description:    z.string().max(1000).nullish(),
+  event_type:     z.enum(['live_band', 'dj', 'open_mic', 'jam_session']),
+  is_music_event: z.boolean(),
 })
 
 // Row type for `scrape_logs` table (not yet in generated types)

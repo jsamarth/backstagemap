@@ -58,10 +58,17 @@ export const analyzeSubUrls = task({
     } catch {
       console.error('[analyze-sub-urls] failed to parse tool call arguments:', toolCall.function.arguments)
     }
-    console.log(`[analyze-sub-urls] extracted events=${events.length}`)
+    const musicEvents = events.filter(e => {
+      if (!e.is_music_event) {
+        console.warn(`[analyze-sub-urls] skipping non-music event: "${e.event_name}"`)
+        return false
+      }
+      return true
+    })
+    console.log(`[analyze-sub-urls] extracted events=${events.length} music=${musicEvents.length}`)
 
     // Upsert events
-    for (const event of events) {
+    for (const event of musicEvents) {
       await supabase.from('events').upsert(
         {
           venue_id:     venueId,
@@ -96,7 +103,7 @@ export const analyzeSubUrls = task({
       status:   'success',
     })
 
-    console.log(`[analyze-sub-urls] DONE eventsUpserted=${events.length}`)
-    return { venueId, eventsFound: events.length }
+    console.log(`[analyze-sub-urls] DONE eventsUpserted=${musicEvents.length}`)
+    return { venueId, eventsFound: musicEvents.length }
   },
 })

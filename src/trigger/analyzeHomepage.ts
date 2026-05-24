@@ -74,10 +74,17 @@ export const analyzeHomepage = task({
 
     const subUrls = resolveSubUrls(rawSubUrls, sourceUrl)
 
-    console.log(`[analyze-homepage] extracted events=${events.length} subUrls=${subUrls.length}`)
+    const musicEvents = events.filter(e => {
+      if (!e.is_music_event) {
+        console.warn(`[analyze-homepage] skipping non-music event: "${e.event_name}"`)
+        return false
+      }
+      return true
+    })
+    console.log(`[analyze-homepage] extracted events=${events.length} music=${musicEvents.length} subUrls=${subUrls.length}`)
 
     // Upsert events
-    for (const event of events) {
+    for (const event of musicEvents) {
       await supabase.from('events').upsert(
         {
           venue_id:     venueId,
@@ -108,7 +115,7 @@ export const analyzeHomepage = task({
       status:   'success',
     })
 
-    console.log(`[analyze-homepage] DONE eventsUpserted=${events.length}`)
-    return { venueId, eventsFound: events.length, subUrls }
+    console.log(`[analyze-homepage] DONE eventsUpserted=${musicEvents.length}`)
+    return { venueId, eventsFound: musicEvents.length, subUrls }
   },
 })

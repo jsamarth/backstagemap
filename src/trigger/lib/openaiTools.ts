@@ -13,7 +13,7 @@ export const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
           type: 'array',
           items: {
             type: 'object',
-            required: ['event_name', 'date', 'event_type', 'price_type'],
+            required: ['event_name', 'date', 'event_type', 'price_type', 'is_music_event'],
             properties: {
               event_name:   { type: 'string' },
               artist_name:  { type: ['string', 'null'] },
@@ -24,6 +24,7 @@ export const extractEventsTool: OpenAI.Chat.ChatCompletionTool = {
               price_amount: { type: ['number', 'null'] },
               description:  { type: ['string', 'null'] },
               event_type:   { type: 'string', enum: ['live_band', 'dj', 'open_mic', 'jam_session'], description: "IMPORTANT: If the event name or description contains 'jam', 'open jam', or 'live jam', use 'jam_session' — never 'live_band'. Use 'live_band' only for ticketed/scheduled band performances." },
+              is_music_event: { type: 'boolean', description: 'Set to true ONLY if this is a genuine music event (live band, DJ, open mic for music, jam session). Set to false for comedy nights, trivia, karaoke without live music, film screenings, spoken word, or any non-music activity.' },
             },
           },
         },
