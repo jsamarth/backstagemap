@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { DiscoveryPayload, DiscoveryOutput } from '@/trigger/lib/types'
 import { ScrapeWorkflow } from '@/trigger/lib/types'
 import { ALL_NEIGHBORHOODS } from '@/trigger/lib/constants'
+import { getNeighborhoodFromCoords } from '@/trigger/lib/geo'
 
 const QUERIES = [
   'live music bar',
@@ -51,32 +52,18 @@ async function fetchPlacesResults(
   return results.slice(0, maxResults)
 }
 
-type PlaceDetails = { website: string | null; neighborhood: string | null }
+type PlaceDetails = { website: string | null }
 
 async function fetchPlaceDetails(placeId: string, apiKey: string): Promise<PlaceDetails> {
   await new Promise(r => setTimeout(r, 100))
   const url = new URL('https://maps.googleapis.com/maps/api/place/details/json')
   url.searchParams.set('place_id', placeId)
-  url.searchParams.set('fields', 'website,address_components')
+  url.searchParams.set('fields', 'website')
   url.searchParams.set('key', apiKey)
   const res  = await fetch(url.toString())
   const data = await res.json()
 
-  const website: string | null = data.result?.website ?? null
-
-  // Extract neighborhood from address_components — prefer 'neighborhood' type,
-  // fall back to 'sublocality_level_2' (used by Google for some NYC sub-areas)
-  const components: { long_name: string; types: string[] }[] =
-    data.result?.address_components ?? []
-  const component =
-    components.find(c => c.types.includes('neighborhood')) ??
-    components.find(c => c.types.includes('sublocality_level_2'))
-
-  const neighborhood = component
-    ? component.long_name.toLowerCase().replace(/[\s\-]+/g, '_')
-    : null
-
-  return { website, neighborhood }
+  return { website: data.result?.website ?? null }
 }
 
 async function runDiscovery(payload: DiscoveryPayload): Promise<DiscoveryOutput> {
@@ -121,7 +108,11 @@ async function runDiscovery(payload: DiscoveryPayload): Promise<DiscoveryOutput>
           continue
         }
 
-        const { website: websiteUrl, neighborhood } = await fetchPlaceDetails(place.place_id, googleKey)
+        const { website: websiteUrl } = await fetchPlaceDetails(place.place_id, googleKey)
+        const neighborhood = getNeighborhoodFromCoords(
+          place.geometry.location.lat,
+          place.geometry.location.lng,
+        )
 
         const { error } = await supabase.from('venues').upsert({
           name:                 place.name,
