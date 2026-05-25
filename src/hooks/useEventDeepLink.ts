@@ -29,7 +29,7 @@ export function useEventDeepLink(
         .from("events")
         .select("*, venues(*)")
         .eq("venue_id", venueId!)
-        .gte("date", new Date().toISOString().split("T")[0])
+        .gte("date", new Date().toLocaleDateString("en-CA"))
         .order("date", { ascending: true });
       if (error) throw error;
       return (data as EventWithVenue[]) ?? null;

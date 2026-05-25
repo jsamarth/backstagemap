@@ -9,7 +9,7 @@ export function useEvents(filters: FilterState) {
       let query = supabase
         .from("events")
         .select("*, venues(*), event_analytics(*)")
-        .gte("date", new Date().toISOString().split("T")[0])
+        .gte("date", new Date().toLocaleDateString("en-CA"))
         .order("date", { ascending: true });
 
       if (filters.date) {
