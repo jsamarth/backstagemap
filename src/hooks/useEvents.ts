@@ -17,7 +17,10 @@ export function useEvents(filters: FilterState) {
       }
 
       if (filters.eventTypes.length > 0) {
-        query = query.in("event_type", filters.eventTypes);
+        const dbEventTypes = filters.eventTypes.flatMap(t =>
+          t === "open_mic_jam" ? ["open_mic", "jam_session"] : [t]
+        );
+        query = query.in("event_type", dbEventTypes);
       }
 
       if (filters.priceTypes.length > 0) {

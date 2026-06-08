@@ -10,6 +10,7 @@ export type EventWithVenue = Event & {
 };
 
 export type EventTypeKey = "live_band" | "dj" | "open_mic" | "jam_session";
+export type FilterEventTypeKey = "live_band" | "dj" | "open_mic_jam";
 export type PriceTypeKey = "free" | "cover" | "ticketed";
 
 export function formatNeighborhood(key: string): string {
@@ -24,22 +25,34 @@ export function formatNeighborhood(key: string): string {
 export const EVENT_TYPE_LABELS: Record<EventTypeKey, string> = {
   live_band: "Live Band",
   dj: "DJ",
-  open_mic: "Open Mic",
-  jam_session: "Jam Session",
+  open_mic: "Open mic / jam",
+  jam_session: "Open mic / jam",
 };
 
 export const EVENT_TYPE_COLORS: Record<EventTypeKey, string> = {
   live_band: "bg-pin-live-band",
   dj: "bg-pin-dj",
   open_mic: "bg-pin-open-mic",
-  jam_session: "bg-pin-jam-session",
+  jam_session: "bg-pin-open-mic",
 };
 
 export const EVENT_TYPE_HEX: Record<EventTypeKey, string> = {
   live_band: "#EC4899",
   dj: "#06B6D4",
   open_mic: "#F59E0B",
-  jam_session: "#22C55E",
+  jam_session: "#F59E0B",
+};
+
+export const FILTER_TYPE_LABELS: Record<FilterEventTypeKey, string> = {
+  live_band: "Live Band",
+  dj: "DJ",
+  open_mic_jam: "Open mic / jam",
+};
+
+export const FILTER_TYPE_COLORS: Record<FilterEventTypeKey, string> = {
+  live_band: "bg-pin-live-band",
+  dj: "bg-pin-dj",
+  open_mic_jam: "bg-pin-open-mic",
 };
 
 export const PRICE_TYPE_LABELS: Record<PriceTypeKey, string> = {
@@ -51,7 +64,7 @@ export const PRICE_TYPE_LABELS: Record<PriceTypeKey, string> = {
 export interface FilterState {
   date: string | null;
   neighborhoods: string[];
-  eventTypes: EventTypeKey[];
+  eventTypes: FilterEventTypeKey[];
   priceTypes: PriceTypeKey[];
   timeOfDay: ("afternoon" | "evening" | "late_night")[];
   venueIds: string[];

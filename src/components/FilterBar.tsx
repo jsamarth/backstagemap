@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
-import type { FilterState, EventTypeKey, PriceTypeKey } from "@/types";
-import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, PRICE_TYPE_LABELS, formatNeighborhood } from "@/types";
+import type { FilterState, FilterEventTypeKey, PriceTypeKey } from "@/types";
+import { FILTER_TYPE_LABELS, FILTER_TYPE_COLORS, PRICE_TYPE_LABELS, formatNeighborhood } from "@/types";
 import { useNeighborhoods } from "@/hooks/useNeighborhoods";
 import { format, addDays, nextSaturday, nextSunday } from "date-fns";
 
@@ -119,10 +119,10 @@ export function FilterBar({ filters, onChange, onSavedClick, savedCount, onFeedb
         </PopoverTrigger>
         <PopoverContent className="w-48 bg-card border-border" align="start">
           <div className="space-y-2">
-            {(Object.entries(EVENT_TYPE_LABELS) as [EventTypeKey, string][]).map(([key, label]) => (
+            {(Object.entries(FILTER_TYPE_LABELS) as [FilterEventTypeKey, string][]).map(([key, label]) => (
               <label key={key} className="flex items-center gap-2 cursor-pointer text-sm">
                 <Checkbox checked={filters.eventTypes.includes(key)} onCheckedChange={() => onChange({ ...filters, eventTypes: toggleArray(filters.eventTypes, key) })} />
-                <span className={`w-2 h-2 rounded-full ${EVENT_TYPE_COLORS[key]}`} />
+                <span className={`w-2 h-2 rounded-full ${FILTER_TYPE_COLORS[key]}`} />
                 {label}
               </label>
             ))}
