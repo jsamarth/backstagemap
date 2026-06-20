@@ -168,7 +168,18 @@ function PanelContent({
       <div className="bg-accent/50 rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2">
           <Music className="w-4 h-4 text-primary shrink-0" />
-          <span className="font-display font-semibold text-sm">{event.venues.name}</span>
+          {event.venues.website_url ? (
+            <a
+              href={event.venues.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-display font-semibold text-sm hover:underline"
+            >
+              {event.venues.name}
+            </a>
+          ) : (
+            <span className="font-display font-semibold text-sm">{event.venues.name}</span>
+          )}
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <MapPin className="w-4 h-4 shrink-0" />
